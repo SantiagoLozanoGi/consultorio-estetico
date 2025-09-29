@@ -8,32 +8,40 @@ export default function HomePage() {
   return (
     <>
       {/* HERO */}
-      <section
-        className="hero-section text-center py-5"
-        style={{ background: "linear-gradient(to bottom right, #e6f0ff, #ffffff)" }}
-      >
-        <div className="container">
-          <Image
-            src="/imagenes/logo.jpg"
-            alt="Logo Clínica"
-            width={200}
-            height={140}
-            className="mb-4"
-          />
+{/* HERO */}
+<section
+  className="d-flex align-items-center"
+  style={{
+    backgroundImage: "url('/imagenes/estetica.webp')", // Cambia por la imagen que quieras de fondo
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    minHeight: "100vh",
+    color: "#333",
+  }}
+>
+  <div className="container text-end">
+    
+    {/* Nombre */}
+    <h1 className="fw-bold display-5 mb-3 text-dark">
+      Dra. Juliet Vanessa Medina Orjuela
+    </h1>
 
-          <h1 className="display-4 fw-bold mb-4 text-dark">
-            Dra. Juliet Vanessa Medina Orjuela
-          </h1>
+    {/* Texto bienvenida */}
+    <p className="lead text-muted mb-4">
+      Hacemos del paso del tiempo tu mejor aliado, <br />
+      guiado por expertos que comprenden su lenguaje
+    </p>
 
-          <Link href="/agendar" className="btn btn-primary btn-lg px-4 me-2">
-            <i className="fas fa-calendar-check me-2"></i>Agendar Cita
-          </Link>
+    {/* Botones */}
+    <Link href="/agendar" className="btn btn-primary btn-lg px-4 me-2">
+      <i className="fas fa-calendar-check me-2"></i>Agendar Cita
+    </Link>
 
-          <Link href="/procedimientos" className="btn btn-outline-primary btn-lg px-4">
-            <i className="fas fa-procedures me-2"></i>Nuestros Procedimientos
-          </Link>
-        </div>
-      </section>
+    
+  </div>
+</section>
+
+
 
       {/* SOBRE LA DRA */}
       <section className="py-5">
