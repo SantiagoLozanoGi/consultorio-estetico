@@ -1,103 +1,227 @@
+// app/page.tsx
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <>
+      {/* HERO */}
+      <section
+        className="hero-section text-center py-5"
+        style={{ background: "linear-gradient(to bottom right, #e6f0ff, #ffffff)" }}
+      >
+        <div className="container">
+          <Image
+            src="/images/logo.jpg"
+            alt="Logo Clínica"
+            width={200}
+            height={140}
+            className="mb-4"
+          />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          <h1 className="display-4 fw-bold mb-4 text-dark">
+            Dra. Juliet Vanessa Medina Orjuela
+          </h1>
+
+          <Link href="/agendar" className="btn btn-primary btn-lg px-4 me-2">
+            <i className="fas fa-calendar-check me-2"></i>Agendar Cita
+          </Link>
+
+          <Link href="/procedimientos" className="btn btn-outline-primary btn-lg px-4">
+            <i className="fas fa-procedures me-2"></i>Nuestros Procedimientos
+          </Link>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+      </section>
+
+      {/* SOBRE LA DRA */}
+      <section className="py-5">
+        <div className="container">
+          <div className="row align-items-center">
+            <div className="col-lg-4 text-center mb-4 mb-lg-0">
+              <Image
+                src="/images/doctora.jpg"
+                alt="Dra. Juliet Medina"
+                width={300}
+                height={300}
+                className="img-fluid doctor-img"
+              />
+            </div>
+            <div className="col-lg-8">
+              <h2 className="fw-bold mb-4">Sobre la Dra. Juliet Medina</h2>
+              <p className="lead">
+                Médica Especialista en Medicina Estética con más de 10 años de experiencia.
+              </p>
+              <p>
+                Graduada con honores de la Universidad del Tolima, con Maestría en Dirección y
+                Gestión Sanitaria. Mi enfoque es proporcionar tratamientos personalizados que
+                combinan lo último en tecnología con un enfoque holístico del bienestar.
+              </p>
+
+              <div className="row mt-4">
+                <div className="col-md-6">
+                  <h5>
+                    <i className="fas fa-award text-primary me-2"></i>Especialidades
+                  </h5>
+                  <ul>
+                    <li>Medicina Estética Facial</li>
+                    <li>Nutrición y Control de Peso</li>
+                    <li>Tratamientos Antiedad</li>
+                    <li>Terapias de Regeneración Celular</li>
+                  </ul>
+                </div>
+                <div className="col-md-6">
+                  <h5>
+                    <i className="fas fa-graduation-cap text-primary me-2"></i>Certificaciones
+                  </h5>
+                  <ul>
+                    <li>Miembro de la Sociedad Colombiana de Medicina Estética</li>
+                    <li>Certificada en Toxina Botulínica y Rellenos</li>
+                    <li>Diplomado en Medicina Antienvejecimiento</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PROCEDIMIENTOS DESTACADOS */}
+      <section className="py-5 bg-light">
+        <div className="container">
+          <div className="text-center mb-5">
+            <h2 className="fw-bold">Procedimientos Destacados</h2>
+            <p className="lead">Descubre nuestros tratamientos más populares</p>
+          </div>
+
+          <div className="row g-4 justify-content-center">
+            {[
+              {
+                img: "/images/P_LimpiezaFacial.jpg",
+                title: "Limpieza Facial",
+                desc: "Tratamiento para suavizar y rejuvenecer la piel.",
+                id: 1,
+              },
+              {
+                img: "/images/P_Botox.jpg",
+                title: "Bótox",
+                desc: "Tratamiento para suavizar arrugas de expresión con resultados naturales.",
+                id: 1,
+              },
+              {
+                img: "/images/P_Acido_hialuronico.jpg",
+                title: "Ácido Hialurónico en labios",
+                desc: "Relleno para restaurar volumen y contorno de los labios.",
+                id: 2,
+              },
+              {
+                img: "/images/P_Perfilamiento_Facial.jpg",
+                title: "Ácido Hialurónico Facial",
+                desc: "Rellenos faciales para restaurar volumen y contorno facial.",
+                id: 2,
+              },
+              {
+                img: "/images/P_Tratamiento_Acne.jpg",
+                title: "Tratamiento Para El Acné",
+                desc: "Desinflamación de zonas afectadas con tecnología de última generación.",
+                id: 3,
+              },
+              {
+                img: "/images/P_Tratamiento_Manchas.jpg",
+                title: "Tratamiento Para Manchas",
+                desc: "Inhibe la producción de melanina y renueva la piel con tecnología de última generación.",
+                id: 3,
+              },
+            ].map((proc, idx) => (
+              <div className="col-md-4" key={idx}>
+                <div className="card procedure-card h-100">
+                  <Image
+                    src={proc.img}
+                    alt={proc.title}
+                    width={400}
+                    height={200}
+                    className="card-img-top"
+                    style={{ objectFit: "cover", height: "200px" }}
+                  />
+                  <div className="card-body">
+                    <h5 className="card-title">{proc.title}</h5>
+                    <p className="card-text">{proc.desc}</p>
+                    <Link
+                      href={`/procedimientos/${proc.id}`}
+                      className="btn btn-outline-primary"
+                    >
+                      Más información
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-4">
+            <Link href="/procedimientos" className="btn btn-primary btn-lg">
+              Ver todos los procedimientos <i className="fas fa-arrow-right ms-2"></i>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIOS */}
+      <section className="py-5">
+        <div className="container">
+          <h2 className="text-center fw-bold mb-5">Lo que dicen nuestros pacientes</h2>
+
+          <div className="row">
+            {[
+              {
+                name: "María González",
+                year: "Paciente desde 2020",
+                img: "/images/paciente1.jpg",
+                text: "La Dra. Medina tiene un enfoque profesional y cálido. Los resultados de mi tratamiento superaron mis expectativas haciendo que tenga mas confianza en mi trabajo.",
+              },
+              {
+                name: "Daniela Hurrego",
+                year: "Paciente desde 2021",
+                img: "/images/paciente2.jpg",
+                text: "Excelente atención y resultados muy naturales. Me siento 10 años más joven gracias a sus tratamientos de aplicacion de botox.",
+              },
+              {
+                name: "Ana Martínez",
+                year: "Paciente desde 2019",
+                img: "/images/paciente3.jpg",
+                text: "Profesionalismo y atención personalizada. Los tratamientos son indoloros y los resultados espectaculares.",
+              },
+            ].map((testi, idx) => (
+              <div className="col-md-4 mb-4" key={idx}>
+                <div className="card h-100">
+                  <div className="card-body">
+                    <div className="mb-3 text-warning">
+                      {[...Array(5)].map((_, i) => (
+                        <i key={i} className="fas fa-star"></i>
+                      ))}
+                    </div>
+                    <p className="card-text">"{testi.text}"</p>
+                    <div className="d-flex align-items-center">
+                      <Image
+                        src={testi.img}
+                        alt={testi.name}
+                        width={50}
+                        height={50}
+                        className="rounded-circle me-3"
+                      />
+                      <div>
+                        <h6 className="mb-0">{testi.name}</h6>
+                        <small className="text-muted">{testi.year}</small>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
