@@ -14,7 +14,7 @@ export default function HomePage() {
       >
         <div className="container">
           <Image
-            src="/images/logo.jpg"
+            src="/imagenes/logo.jpg"
             alt="Logo Clínica"
             width={200}
             height={140}
@@ -41,7 +41,7 @@ export default function HomePage() {
           <div className="row align-items-center">
             <div className="col-lg-4 text-center mb-4 mb-lg-0">
               <Image
-                src="/images/doctora.jpg"
+                src="/imagenes/doctora.jpg"
                 alt="Dra. Juliet Medina"
                 width={300}
                 height={300}
@@ -98,37 +98,37 @@ export default function HomePage() {
           <div className="row g-4 justify-content-center">
             {[
               {
-                img: "/images/P_LimpiezaFacial.jpg",
+                img: "/imagenes/P_LimpiezaFacial.jpg",
                 title: "Limpieza Facial",
                 desc: "Tratamiento para suavizar y rejuvenecer la piel.",
                 id: 1,
               },
               {
-                img: "/images/P_Botox.jpg",
+                img: "/imagenes/P_Botox.jpg",
                 title: "Bótox",
                 desc: "Tratamiento para suavizar arrugas de expresión con resultados naturales.",
                 id: 1,
               },
               {
-                img: "/images/P_Acido_hialuronico.jpg",
+                img: "/imagenes/P_Acido_hialuronico.jpg",
                 title: "Ácido Hialurónico en labios",
                 desc: "Relleno para restaurar volumen y contorno de los labios.",
                 id: 2,
               },
               {
-                img: "/images/P_Perfilamiento_Facial.jpg",
+                img: "/imagenes/P_Perfilamiento_Facial.jpg",
                 title: "Ácido Hialurónico Facial",
                 desc: "Rellenos faciales para restaurar volumen y contorno facial.",
                 id: 2,
               },
               {
-                img: "/images/P_Tratamiento_Acne.jpg",
+                img: "/imagenes/P_Tratamiento_Acne.jpg",
                 title: "Tratamiento Para El Acné",
                 desc: "Desinflamación de zonas afectadas con tecnología de última generación.",
                 id: 3,
               },
               {
-                img: "/images/P_Tratamiento_Manchas.jpg",
+                img: "/imagenes/P_Tratamiento_Manchas.jpg",
                 title: "Tratamiento Para Manchas",
                 desc: "Inhibe la producción de melanina y renueva la piel con tecnología de última generación.",
                 id: 3,
@@ -177,19 +177,19 @@ export default function HomePage() {
               {
                 name: "María González",
                 year: "Paciente desde 2020",
-                img: "/images/paciente1.jpg",
+                img: "/imagenes/paciente1.jpg",
                 text: "La Dra. Medina tiene un enfoque profesional y cálido. Los resultados de mi tratamiento superaron mis expectativas haciendo que tenga mas confianza en mi trabajo.",
               },
               {
                 name: "Daniela Hurrego",
                 year: "Paciente desde 2021",
-                img: "/images/paciente2.jpg",
+                img: "/imagenes/paciente2.jpg",
                 text: "Excelente atención y resultados muy naturales. Me siento 10 años más joven gracias a sus tratamientos de aplicacion de botox.",
               },
               {
                 name: "Ana Martínez",
                 year: "Paciente desde 2019",
-                img: "/images/paciente3.jpg",
+                img: "/imagenes/paciente3.jpg",
                 text: "Profesionalismo y atención personalizada. Los tratamientos son indoloros y los resultados espectaculares.",
               },
             ].map((testi, idx) => (
