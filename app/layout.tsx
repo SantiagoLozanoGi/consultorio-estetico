@@ -7,7 +7,8 @@ import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Clínica Estética Dra. Juliet Medina",
-  description: "Especialista en Medicina Estética, Nutrición y Antiedad en Ibagué",
+  description:
+    "Especialista en Medicina Estética, Nutrición y Antiedad en Ibagué",
 };
 
 export default function RootLayout({
@@ -21,7 +22,8 @@ export default function RootLayout({
         {/* Navbar */}
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
           <div className="container">
-            <Link className="navbar-brand" href="/">
+            {/* Logo */}
+            <Link className="navbar-brand d-flex align-items-center" href="/">
               <Image
                 src="/imagenes/logo.jpg"
                 alt="Logo Clínica Estética"
@@ -30,32 +32,52 @@ export default function RootLayout({
                 className="d-inline-block align-text-top me-2"
               />
             </Link>
+
+            {/* Botón móvil */}
             <button
               className="navbar-toggler"
               type="button"
               data-bs-toggle="collapse"
               data-bs-target="#navbarNav"
+              aria-controls="navbarNav"
+              aria-expanded="false"
+              aria-label="Toggle navigation"
             >
               <span className="navbar-toggler-icon"></span>
             </button>
+
+            {/* Links */}
             <div className="collapse navbar-collapse" id="navbarNav">
+              {/* Links a la izquierda */}
               <ul className="navbar-nav me-auto">
                 <li className="nav-item">
-                  <Link className="nav-link" href="/">Inicio</Link>
+                  <Link className="nav-link text-white" href="/">
+                    <span>Inicio</span>
+                  </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" href="/procedimientos">Procedimientos</Link>
+                  <Link className="nav-link text-white" href="/procedimientos">
+                    <span>Procedimientos</span>
+                  </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" href="/agendar">Agendar Cita</Link>
+                  <Link className="nav-link text-white" href="/agendar">
+                    <span>Agendar Cita</span>
+                  </Link>
                 </li>
               </ul>
-              <ul className="navbar-nav">
+
+              {/* Links a la derecha */}
+              <ul className="navbar-nav ms-auto">
                 <li className="nav-item">
-                  <Link className="nav-link" href="/login">Iniciar Sesión</Link>
+                  <Link className="nav-link text-white" href="/login">
+                    <span>Iniciar Sesión</span>
+                  </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link" href="/register">Registrarse</Link>
+                  <Link className="nav-link text-white" href="/register">
+                    <span>Registrarse</span>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -75,23 +97,36 @@ export default function RootLayout({
               </div>
               <div className="col-md-4">
                 <h5>Contacto</h5>
-                <p><i className="fas fa-map-marker-alt me-2"></i> Clínica Medicadiz, Torre Especialistas, Ibagué</p>
-                <p><i className="fas fa-phone me-2"></i> 300 123 4567</p>
+                <p>
+                  <i className="fas fa-map-marker-alt me-2"></i> Clínica
+                  Medicadiz, Torre Especialistas, Ibagué
+                </p>
+                <p>
+                  <i className="fas fa-phone me-2"></i> 300 123 4567
+                </p>
               </div>
               <div className="col-md-4">
                 <h5>Horario</h5>
-                <p>Lunes a Viernes: 8:00 AM - 12:00 PM / 2:00 PM - 6:00 PM</p>
+                <p>
+                  Lunes a Viernes: 8:00 AM - 12:00 PM / 2:00 PM - 6:00 PM
+                </p>
                 <p>Sábados: 9:00 AM - 1:00 PM</p>
               </div>
             </div>
             <hr />
             <div className="text-center">
-              <p>© 2023 Clínica Estética Dra. Juliet Medina. Todos los derechos reservados.</p>
+              <p>
+                © 2023 Clínica Estética Dra. Juliet Medina. Todos los derechos
+                reservados.
+              </p>
             </div>
           </div>
         </footer>
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" async />
+        <script
+          src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+          async
+        />
       </body>
     </html>
   );
