@@ -20,63 +20,51 @@ export default function RootLayout({
     <html lang="es">
       <body>
         {/* Navbar */}
-        <nav className="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
-          <div className="container">
+        <nav className="navbar navbar-dark bg-primary sticky-top">
+          <div className="container d-flex align-items-center justify-content-between">
             {/* Logo */}
             <Link className="navbar-brand d-flex align-items-center" href="/">
               <Image
                 src="/imagenes/logo.jpg"
                 alt="Logo Clínica Estética"
-                width={50}
-                height={50}
+                width={60}
+                height={60}
                 className="d-inline-block align-text-top me-2"
               />
+              <span className="fw-bold">Clínica Estética</span>
             </Link>
 
-            {/* Botón móvil */}
-            <button
-              className="navbar-toggler"
-              type="button"
-              data-bs-toggle="collapse"
-              data-bs-target="#navbarNav"
-              aria-controls="navbarNav"
-              aria-expanded="false"
-              aria-label="Toggle navigation"
-            >
-              <span className="navbar-toggler-icon"></span>
-            </button>
-
-            {/* Links */}
-            <div className="collapse navbar-collapse" id="navbarNav">
-              {/* Links a la izquierda */}
-              <ul className="navbar-nav me-auto">
-                <li className="nav-item">
+            {/* Menú (en fila al lado del logo) */}
+            <div className="d-flex align-items-center">
+              {/* Links izquierda */}
+              <ul className="navbar-nav flex-row me-3">
+                <li className="nav-item me-3">
                   <Link className="nav-link text-white" href="/">
-                    <span>Inicio</span>
+                    <i className="fas fa-home me-1"></i>Inicio
                   </Link>
                 </li>
-                <li className="nav-item">
+                <li className="nav-item me-3">
                   <Link className="nav-link text-white" href="/procedimientos">
-                    <span>Procedimientos</span>
+                    <i className="fas fa-syringe me-1"></i>Procedimientos
                   </Link>
                 </li>
-                <li className="nav-item">
+                <li className="nav-item me-3">
                   <Link className="nav-link text-white" href="/agendar">
-                    <span>Agendar Cita</span>
+                    <i className="fas fa-calendar-check me-1"></i>Agendar Cita
                   </Link>
                 </li>
               </ul>
 
-              {/* Links a la derecha */}
-              <ul className="navbar-nav ms-auto">
-                <li className="nav-item">
-                  <Link className="nav-link text-white" href="/login">
-                    <span>Iniciar Sesión</span>
+              {/* Links derecha */}
+              <ul className="navbar-nav flex-row">
+                <li className="nav-item me-3">
+                  <Link className="btn btn-light text-primary" href="/login">
+                    <i className="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link text-white" href="/register">
-                    <span>Registrarse</span>
+                  <Link className="btn btn-warning text-dark" href="/register">
+                    <i className="fas fa-user-plus me-1"></i>Registrarse
                   </Link>
                 </li>
               </ul>
@@ -98,8 +86,7 @@ export default function RootLayout({
               <div className="col-md-4">
                 <h5>Contacto</h5>
                 <p>
-                  <i className="fas fa-map-marker-alt me-2"></i> Clínica
-                  Medicadiz, Torre Especialistas, Ibagué
+                  <i className="fas fa-map-marker-alt me-2"></i> Clínica Medicadiz, Torre Especialistas, Ibagué
                 </p>
                 <p>
                   <i className="fas fa-phone me-2"></i> 300 123 4567
@@ -107,26 +94,18 @@ export default function RootLayout({
               </div>
               <div className="col-md-4">
                 <h5>Horario</h5>
-                <p>
-                  Lunes a Viernes: 8:00 AM - 12:00 PM / 2:00 PM - 6:00 PM
-                </p>
+                <p>Lunes a Viernes: 8:00 AM - 12:00 PM / 2:00 PM - 6:00 PM</p>
                 <p>Sábados: 9:00 AM - 1:00 PM</p>
               </div>
             </div>
             <hr />
             <div className="text-center">
               <p>
-                © 2023 Clínica Estética Dra. Juliet Medina. Todos los derechos
-                reservados.
+                © 2023 Clínica Estética Dra. Juliet Medina. Todos los derechos reservados.
               </p>
             </div>
           </div>
         </footer>
-
-        <script
-          src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-          async
-        />
       </body>
     </html>
   );
