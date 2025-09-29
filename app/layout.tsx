@@ -21,7 +21,7 @@ export default function RootLayout({
           <div className="container">
             <a className="navbar-brand" href="/">
               <img
-                src="/images/logo.jpg"
+                src="/imagenes/logo.jpg"
                 alt="Logo Clínica Estética"
                 style={{ height: "40px" }}
               />
