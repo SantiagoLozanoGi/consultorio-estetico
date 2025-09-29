@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./globals.css";
+import Link from "next/link";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "Clínica Estética Dra. Juliet Medina",
@@ -19,13 +21,15 @@ export default function RootLayout({
         {/* Navbar */}
         <nav className="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
           <div className="container">
-            <a className="navbar-brand" href="/">
-              <img
+            <Link className="navbar-brand" href="/">
+              <Image
                 src="/imagenes/logo.jpg"
                 alt="Logo Clínica Estética"
-                style={{ height: "40px" }}
+                width={50}
+                height={50}
+                className="d-inline-block align-text-top me-2"
               />
-            </a>
+            </Link>
             <button
               className="navbar-toggler"
               type="button"
@@ -37,21 +41,21 @@ export default function RootLayout({
             <div className="collapse navbar-collapse" id="navbarNav">
               <ul className="navbar-nav me-auto">
                 <li className="nav-item">
-                  <a className="nav-link" href="/">Inicio</a>
+                  <Link className="nav-link" href="/">Inicio</Link>
                 </li>
                 <li className="nav-item">
-                  <a className="nav-link" href="/procedimientos">Procedimientos</a>
+                  <Link className="nav-link" href="/procedimientos">Procedimientos</Link>
                 </li>
                 <li className="nav-item">
-                  <a className="nav-link" href="/agendar">Agendar Cita</a>
+                  <Link className="nav-link" href="/agendar">Agendar Cita</Link>
                 </li>
               </ul>
               <ul className="navbar-nav">
                 <li className="nav-item">
-                  <a className="nav-link" href="/login">Iniciar Sesión</a>
+                  <Link className="nav-link" href="/login">Iniciar Sesión</Link>
                 </li>
                 <li className="nav-item">
-                  <a className="nav-link" href="/register">Registrarse</a>
+                  <Link className="nav-link" href="/register">Registrarse</Link>
                 </li>
               </ul>
             </div>
