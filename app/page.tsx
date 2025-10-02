@@ -1,4 +1,4 @@
-// app/page.tsx
+
 "use client";
 
 import Image from "next/image";
@@ -12,7 +12,7 @@ export default function HomePage() {
 <section
   className="d-flex align-items-center"
   style={{
-    backgroundImage: "url('/imagenes/estetica.webp')", // Cambia por la imagen que quieras de fondo
+    backgroundImage: "url('/imagenes/estetica.webp')", 
     backgroundSize: "cover",
     backgroundPosition: "center",
     minHeight: "100vh",
