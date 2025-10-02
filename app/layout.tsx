@@ -18,6 +18,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
+      {/* ✅ necesario en Next App Router */}
+      <head />
       <body>
         {/* Navbar */}
         <nav className="navbar navbar-dark bg-primary sticky-top">
@@ -101,7 +103,8 @@ export default function RootLayout({
             <hr />
             <div className="text-center">
               <p>
-                © 2023 Clínica Estética Dra. Juliet Medina. Todos los derechos reservados.
+                
+                &copy; 2023 Clínica Estética Dra. Juliet Medina. Todos los derechos reservados.
               </p>
             </div>
           </div>

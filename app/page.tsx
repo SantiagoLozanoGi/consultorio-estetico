@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -8,40 +7,34 @@ export default function HomePage() {
   return (
     <>
       {/* HERO */}
-{/* HERO */}
-<section
-  className="d-flex align-items-center"
-  style={{
-    backgroundImage: "url('/imagenes/estetica.webp')", 
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    minHeight: "100vh",
-    color: "#333",
-  }}
->
-  <div className="container text-end">
-    
-    {/* Nombre */}
-    <h1 className="fw-bold display-5 mb-3 text-dark">
-      Dra. Juliet Vanessa Medina Orjuela
-    </h1>
+      <section
+        className="d-flex align-items-center"
+        style={{
+          backgroundImage: "url('/imagenes/estetica.webp')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          minHeight: "100vh",
+          color: "#333",
+        }}
+      >
+        <div className="container text-end">
+          {/* Nombre */}
+          <h1 className="fw-bold display-5 mb-3 text-dark">
+            Dra. Juliet Vanessa Medina Orjuela
+          </h1>
 
-    {/* Texto bienvenida */}
-    <p className="lead text-muted mb-4">
-      Hacemos del paso del tiempo tu mejor aliado, <br />
-      guiado por expertos que comprenden su lenguaje
-    </p>
+          {/* Texto bienvenida */}
+          <p className="lead text-muted mb-4">
+            Hacemos del paso del tiempo tu mejor aliado, <br />
+            guiado por expertos que comprenden su lenguaje
+          </p>
 
-    {/* Botones */}
-    <Link href="/agendar" className="btn btn-primary btn-lg px-4 me-2">
-      <i className="fas fa-calendar-check me-2"></i>Agendar Cita
-    </Link>
-
-    
-  </div>
-</section>
-
-
+          {/* Botones */}
+          <Link href="/agendar" className="btn btn-primary btn-lg px-4 me-2">
+            <i className="fas fa-calendar-check me-2"></i>Agendar Cita
+          </Link>
+        </div>
+      </section>
 
       {/* SOBRE LA DRA */}
       <section className="py-5">
@@ -186,13 +179,13 @@ export default function HomePage() {
                 name: "María González",
                 year: "Paciente desde 2020",
                 img: "/imagenes/paciente1.jpg",
-                text: "La Dra. Medina tiene un enfoque profesional y cálido. Los resultados de mi tratamiento superaron mis expectativas haciendo que tenga mas confianza en mi trabajo.",
+                text: "La Dra. Medina tiene un enfoque profesional y cálido. Los resultados de mi tratamiento superaron mis expectativas haciendo que tenga más confianza en mi trabajo.",
               },
               {
                 name: "Daniela Hurrego",
                 year: "Paciente desde 2021",
                 img: "/imagenes/paciente2.jpg",
-                text: "Excelente atención y resultados muy naturales. Me siento 10 años más joven gracias a sus tratamientos de aplicacion de botox.",
+                text: "Excelente atención y resultados muy naturales. Me siento 10 años más joven gracias a sus tratamientos de aplicación de bótox.",
               },
               {
                 name: "Ana Martínez",
@@ -209,7 +202,7 @@ export default function HomePage() {
                         <i key={i} className="fas fa-star"></i>
                       ))}
                     </div>
-                    <p className="card-text">"{testi.text}"</p>
+                    <p className="card-text">&quot;{testi.text}&quot;</p>
                     <div className="d-flex align-items-center">
                       <Image
                         src={testi.img}
