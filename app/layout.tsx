@@ -18,7 +18,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es">
-      {/* ✅ necesario en Next App Router */}
+      
       <head />
       <body>
         {/* Navbar */}
