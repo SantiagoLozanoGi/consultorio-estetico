@@ -2,22 +2,49 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react"; 
+
 
 export default function HomePage() {
+  
+  const imagenes = [
+    "/imagenes/carru.png",
+    "/imagenes/Cbotox.jpg",
+    "/imagenes/Cbotox2.jpg",
+    "/imagenes/Ccirujia.jpg",
+    "/imagenes/Cfacial.jpg",
+    "/imagenes/Climpieza.jpg",
+    "/imagenes/Cmascarilla.jpg",
+    "/imagenes/Cmascarilla2.jpg",
+    "/imagenes/Cmascarilla3.jpg",
+    "/imagenes/Cnariz.jpg",
+  
+  ];
+
+  const [imagenActual, setImagenActual] = useState(0);
+
+
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      setImagenActual((prev) => (prev + 1) % imagenes.length);
+    }, 5000); // 5000 = 5 segundos
+    return () => clearInterval(intervalo);
+  }, []);
+
   return (
     <>
       {/* HERO */}
-{/* HERO */}
-<section
-  className="d-flex align-items-center"
-  style={{
-    backgroundImage: "url('/imagenes/estetica.webp')", // Cambia por la imagen que quieras de fondo
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    minHeight: "100vh",
-    color: "#333",
-  }}
->
+      <section
+        className="d-flex align-items-center justify-content-end text-end"
+        style={{
+          backgroundImage: `url('${imagenes[imagenActual]}')`, 
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          minHeight: "100vh",
+          color: "#fff",
+          transition: "background-image 1s ease-in-out", 
+        }}
+      >
   <div className="container text-end">
     
     {/* Nombre */}
