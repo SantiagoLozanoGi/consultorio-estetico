@@ -205,7 +205,7 @@ export default function HomePage() {
   </div>
 </section>
 
-{/* PROCEDIMIENTOS DESTACADOS (estilo tarjeta flotante) */}
+{/* PROCEDIMIENTOS DESTACADOS */}
 <section
   className="py-5"
   style={{

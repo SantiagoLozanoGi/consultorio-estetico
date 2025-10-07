@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export default function ProcedimientosDestacados() {
   const procedimientos = [
-    // --- EXISTENTES ---
+    
     {
       id: 1,
       img: "/imagenes/P_LimpiezaFacial.jpg",
@@ -47,7 +47,7 @@ export default function ProcedimientosDestacados() {
       icon: "fa-sun",
     },
 
-    // --- 10 NUEVOS ---
+ 
     {
       id: 7,
       img: "/imagenes/P_Peeling_Quimico.jpg",
@@ -139,11 +139,11 @@ export default function ProcedimientosDestacados() {
           }}
         >
           <div className="text-center mb-5">
-            <h2 className="fw-bold" style={{ color: "#1E63FF" }}>
-              Procedimientos Destacados
+            <h2 className="fw-bold" style={{ color: "#052368ff" }}>
+              Procedimientos 
             </h2>
             <p className="lead" style={{ color: "#333" }}>
-              Descubre nuestros tratamientos más populares
+              
             </p>
           </div>
 
@@ -214,14 +214,7 @@ export default function ProcedimientosDestacados() {
           </div>
 
           <div className="text-center mt-5">
-            <Link
-              href="/procedimientos"
-              className="btn btn-primary btn-lg"
-              style={{ backgroundColor: "#041a4dff" }}
-            >
-              Ver todos los procedimientos{" "}
-              <i className="fas fa-arrow-right ms-2"></i>
-            </Link>
+            
           </div>
         </div>
       </section>
