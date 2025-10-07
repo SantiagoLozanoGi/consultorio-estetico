@@ -25,7 +25,7 @@ export default function RootLayout({
         <nav
           className="navbar navbar-expand-lg sticky-top"
           style={{
-            backgroundColor: "#041a4dff", // 💙 tono uniforme
+            backgroundColor: "#041a4dff", 
           }}
         >
           <div className="container d-flex align-items-center justify-content-between">
