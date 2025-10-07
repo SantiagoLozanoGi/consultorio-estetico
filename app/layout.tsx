@@ -21,51 +21,79 @@ export default function RootLayout({
       
       <head />
       <body>
-        {/* Navbar */}
-        <nav className="navbar navbar-dark bg-primary sticky-top">
+        {/* NAVBAR */}
+        <nav
+          className="navbar navbar-expand-lg sticky-top"
+          style={{
+            backgroundColor: "#041a4dff", // 💙 tono uniforme
+          }}
+        >
           <div className="container d-flex align-items-center justify-content-between">
-            {/* Logo */}
-            <Link className="navbar-brand d-flex align-items-center" href="/">
+            {/* LOGO + NOMBRE */}
+            <Link
+              className="navbar-brand d-flex align-items-center"
+              href="/"
+              style={{
+                textDecoration: "none",
+              }}
+            >
               <Image
                 src="/imagenes/logo.jpg"
                 alt="Logo Clínica Estética"
-                width={60}
-                height={60}
+                width={90}
+                height={65}
                 className="d-inline-block align-text-top me-2"
+               
+                
               />
-              <span className="fw-bold">Clínica Estética</span>
+              <span
+                style={{
+                  color: "white",
+                  fontFamily: "'Playfair Display', serif",
+                  fontWeight: "600",
+                  fontSize: "1.5rem",
+                  letterSpacing: "0.5px",
+                }}
+              >
+                Clínica Estética
+              </span>
             </Link>
 
-            {/* Menú (en fila al lado del logo) */}
+            {/* MENÚ */}
             <div className="d-flex align-items-center">
-              {/* Links izquierda */}
               <ul className="navbar-nav flex-row me-3">
                 <li className="nav-item me-3">
-                  <Link className="nav-link text-white" href="/">
+                  <Link className="nav-link text-white fw-semibold" href="/">
                     <i className="fas fa-home me-1"></i>Inicio
                   </Link>
                 </li>
                 <li className="nav-item me-3">
-                  <Link className="nav-link text-white" href="/procedimientos">
+                  <Link
+                    className="nav-link text-white fw-semibold"
+                    href="/procedimientos"
+                  >
                     <i className="fas fa-syringe me-1"></i>Procedimientos
                   </Link>
                 </li>
                 <li className="nav-item me-3">
-                  <Link className="nav-link text-white" href="/agendar">
+                  <Link
+                    className="nav-link text-white fw-semibold"
+                    href="/agendar"
+                  >
                     <i className="fas fa-calendar-check me-1"></i>Agendar Cita
                   </Link>
                 </li>
               </ul>
 
-              {/* Links derecha */}
+              {/* BOTONES DERECHA */}
               <ul className="navbar-nav flex-row">
                 <li className="nav-item me-3">
-                  <Link className="btn btn-light text-primary" href="/login">
+                  <Link className="btn btn-light text-primary fw-semibold" href="/login">
                     <i className="fas fa-sign-in-alt me-1"></i>Iniciar Sesión
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="btn btn-warning text-dark" href="/register">
+                  <Link className="btn btn-warning text-dark fw-semibold" href="/register">
                     <i className="fas fa-user-plus me-1"></i>Registrarse
                   </Link>
                 </li>
@@ -74,10 +102,10 @@ export default function RootLayout({
           </div>
         </nav>
 
-        {/* Main content */}
+        {/* CONTENIDO */}
         <main>{children}</main>
 
-        {/* Footer */}
+        {/* FOOTER */}
         <footer className="bg-dark text-white py-4 mt-5">
           <div className="container">
             <div className="row">
@@ -103,8 +131,7 @@ export default function RootLayout({
             <hr />
             <div className="text-center">
               <p>
-                
-                &copy; 2023 Clínica Estética Dra. Juliet Medina. Todos los derechos reservados.
+                © 2023 Clínica Estética Dra. Juliet Medina. Todos los derechos reservados.
               </p>
             </div>
           </div>

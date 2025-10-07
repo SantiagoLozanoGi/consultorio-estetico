@@ -7,21 +7,23 @@ export default function HomePage() {
   return (
     <>
       {/* HERO */}
-      <section
-        className="d-flex align-items-center"
-        style={{
-          backgroundImage: "url('/imagenes/estetica.webp')",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-          minHeight: "100vh",
-          color: "#333",
-        }}
-      >
-        <div className="container text-end">
-          {/* Nombre */}
-          <h1 className="fw-bold display-5 mb-3 text-dark">
-            Dra. Juliet Vanessa Medina Orjuela
-          </h1>
+{/* HERO */}
+<section
+  className="d-flex align-items-center"
+  style={{
+    backgroundImage: "url('/imagenes/estetica.webp')", // Cambia por la imagen que quieras de fondo
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+    minHeight: "100vh",
+    color: "#333",
+  }}
+>
+  <div className="container text-end">
+    
+    {/* Nombre */}
+    <h1 className="fw-bold display-5 mb-3 text-dark">
+      Dra. Juliet Vanessa Medina Orjuela
+    </h1>
 
           {/* Texto bienvenida */}
           <p className="lead text-muted mb-4">
@@ -29,12 +31,16 @@ export default function HomePage() {
             guiado por expertos que comprenden su lenguaje
           </p>
 
-          {/* Botones */}
-          <Link href="/agendar" className="btn btn-primary btn-lg px-4 me-2">
-            <i className="fas fa-calendar-check me-2"></i>Agendar Cita
-          </Link>
-        </div>
-      </section>
+    {/* Botones */}
+    <Link href="/agendar" className="btn btn-primary btn-lg px-4 me-2">
+      <i className="fas fa-calendar-check me-2"></i>Agendar Cita
+    </Link>
+
+    
+  </div>
+</section>
+
+
 
       {/* SOBRE LA DRA */}
       <section className="py-5">
