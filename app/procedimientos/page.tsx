@@ -64,21 +64,22 @@ export default function ProcedimientosDestacados() {
       }}
     >
       <div
-        className="container shadow-lg p-5 rounded-4"
+        className="container shadow-lg p-4 p-md-5 rounded-4"
         style={{
-          background: "rgba(255, 255, 255, 0.9)",
+          background: "rgba(255, 255, 255, 0.95)",
           backdropFilter: "blur(10px)",
           marginTop: "-60px",
           border: "1px solid #E9DED2",
         }}
       >
-        {/* Encabezado */}
-        <div className="text-center mb-5">
+        {/* 🩺 Encabezado */}
+        <div className="text-center mb-5 px-3">
           <h2
             className="fw-bold"
             style={{
               color: "#4E3B2B",
               fontFamily: "'Playfair Display', serif",
+              fontSize: "clamp(1.8rem, 3vw, 2.2rem)",
             }}
           >
             Procedimientos Destacados
@@ -87,8 +88,10 @@ export default function ProcedimientosDestacados() {
             className="lead"
             style={{
               color: "#6C584C",
-              maxWidth: "700px",
+              maxWidth: "720px",
               margin: "0 auto",
+              fontSize: "clamp(0.95rem, 1.4vw, 1.05rem)",
+              lineHeight: "1.6",
             }}
           >
             Tratamientos estéticos y médicos diseñados para resaltar tu belleza
@@ -96,13 +99,18 @@ export default function ProcedimientosDestacados() {
           </p>
         </div>
 
-        {/* Tarjetas */}
-        <div className="row g-5 justify-content-center">
+        {/* 💆‍♀️ Tarjetas */}
+        <div className="row g-4 g-md-5 justify-content-center">
           {procedimientos.map((p) => (
-            <div className="col-12 col-md-6 col-lg-4" key={p.id}>
+            <div
+              className="col-12 col-sm-10 col-md-6 col-lg-4"
+              key={p.id}
+              style={{ display: "flex", justifyContent: "center" }}
+            >
               <div
-                className="position-relative"
+                className="position-relative w-100"
                 style={{
+                  maxWidth: "380px",
                   paddingBottom: "90px",
                 }}
               >
@@ -126,13 +134,14 @@ export default function ProcedimientosDestacados() {
                   <Image
                     src={p.img}
                     alt={p.title}
-                    width={900}
-                    height={1200}
-                    className="w-100"
+                    width={800}
+                    height={600}
+                    className="w-100 img-fluid"
                     style={{
-                      height: 420,
+                      height: "auto",
+                      aspectRatio: "4/3",
                       objectFit: "cover",
-                      transition: "transform 0.4s ease",
+                      borderRadius: "0.8rem",
                     }}
                   />
                 </div>
@@ -143,7 +152,7 @@ export default function ProcedimientosDestacados() {
                   style={{ bottom: 0 }}
                 >
                   <div
-                    className="rounded-4 shadow p-4 mx-3"
+                    className="rounded-4 shadow p-4 mx-2 mx-md-3"
                     style={{
                       backgroundColor: "#FAF9F7",
                       border: "1px solid #E9DED2",
@@ -160,26 +169,16 @@ export default function ProcedimientosDestacados() {
                         "0 4px 10px rgba(0,0,0,0.05)";
                     }}
                   >
-                    <div className="d-flex align-items-start">
-                      {/* Icono animado */}
+                    <div className="d-flex align-items-start flex-nowrap">
+                      {/* Icono */}
                       <div
-                        className="me-3 d-flex align-items-center justify-content-center rounded-circle"
+                        className="me-3 d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
                         style={{
                           width: 50,
                           height: 50,
                           backgroundColor: "#E9DED2",
                           color: "#B08968",
                           transition: "transform 0.4s ease, background 0.4s ease",
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.backgroundColor = "#B08968";
-                          e.currentTarget.style.color = "#FFF";
-                          e.currentTarget.style.transform = "rotate(15deg)";
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.backgroundColor = "#E9DED2";
-                          e.currentTarget.style.color = "#B08968";
-                          e.currentTarget.style.transform = "rotate(0deg)";
                         }}
                       >
                         <i className={`fas ${p.icon} fa-lg`}></i>
@@ -191,6 +190,7 @@ export default function ProcedimientosDestacados() {
                           style={{
                             color: "#4E3B2B",
                             fontFamily: "'Playfair Display', serif",
+                            fontSize: "clamp(1.1rem, 1.6vw, 1.25rem)",
                           }}
                         >
                           {p.title}
@@ -199,8 +199,8 @@ export default function ProcedimientosDestacados() {
                           className="text-muted mb-3"
                           style={{
                             color: "#6C584C",
-                            lineHeight: 1.5,
-                            fontSize: "0.95rem",
+                            lineHeight: "1.5",
+                            fontSize: "clamp(0.85rem, 1.2vw, 0.95rem)",
                           }}
                         >
                           {p.desc}
@@ -214,14 +214,7 @@ export default function ProcedimientosDestacados() {
                             textDecoration: "none",
                             transition: "color 0.3s ease, transform 0.3s ease",
                             display: "inline-block",
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.color = "#A1724F";
-                            e.currentTarget.style.transform = "translateX(3px)";
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.color = "#B08968";
-                            e.currentTarget.style.transform = "translateX(0)";
+                            fontSize: "0.9rem",
                           }}
                         >
                           Ver más <i className="fas fa-arrow-right ms-1"></i>
@@ -249,25 +242,28 @@ export default function ProcedimientosDestacados() {
               backgroundColor: "transparent",
               transition: "all 0.35s ease",
               textDecoration: "none",
-            }}
-            onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = "#B08968";
-              e.currentTarget.style.color = "#FFF";
-              e.currentTarget.style.transform = "scale(1.05)";
-              e.currentTarget.style.boxShadow =
-                "0 6px 16px rgba(176, 137, 104, 0.4)";
-            }}
-            onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "#4E3B2B";
-              e.currentTarget.style.transform = "scale(1)";
-              e.currentTarget.style.boxShadow = "none";
+              fontSize: "clamp(0.9rem, 1.3vw, 1rem)",
             }}
           >
             <i className="fas fa-calendar-check me-2"></i> Agendar una cita
           </Link>
         </div>
       </div>
+
+      {/* 🎨 Estilos Responsivos */}
+      <style jsx>{`
+        @media (max-width: 768px) {
+          .card-body {
+            padding: 1.5rem !important;
+          }
+        }
+
+        @media (max-width: 576px) {
+          .rounded-4 img {
+            height: auto !important;
+          }
+        }
+      `}</style>
     </section>
   );
 }

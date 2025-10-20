@@ -35,7 +35,7 @@
     "**/*.tsx",
     "next-env.d.ts",
     ".next/types/**/*.ts"
-  ],
+, "app/panelAdmin/components"  ],
   "exclude": [
     "node_modules"
   ]

@@ -16,7 +16,7 @@ export default function LoginPage() {
   const [recoverEmail, setRecoverEmail] = useState("");
   const [recoverSent, setRecoverSent] = useState(false);
 
-  // 🧩 Validaciones
+  // ✅ Validaciones básicas
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (!/^\S+@\S+\.\S+$/.test(email)) e.email = "Correo no válido";
@@ -26,7 +26,7 @@ export default function LoginPage() {
 
   const isValid = Object.keys(errors).length === 0;
 
-  // 📨 Manejador de login manual
+  // ✅ Manejador de inicio de sesión
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
@@ -34,7 +34,6 @@ export default function LoginPage() {
     if (!isValid) return;
 
     if (recoverMode) {
-      // Simula envío de recuperación
       setRecoverSent(true);
       setTimeout(() => {
         setRecoverSent(false);
@@ -53,17 +52,15 @@ export default function LoginPage() {
 
   return (
     <section
-      className="py-5"
+      className="py-5 d-flex align-items-center"
       style={{
         background: "linear-gradient(180deg, #FAF9F7 0%, #F1E9E0 100%)",
         minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
       }}
     >
       <div className="container">
-        <div className="row justify-content-center">
-          <div className="col-md-7 col-lg-5">
+        <div className="row justify-content-center px-3">
+          <div className="col-12 col-sm-10 col-md-8 col-lg-5">
             <div
               className="card border-0 shadow-lg rounded-4 animate-fadein"
               style={{
@@ -73,10 +70,11 @@ export default function LoginPage() {
             >
               <div className="card-body p-4 p-md-5 text-center">
                 <h1
-                  className="fw-bold mb-1"
+                  className="fw-bold mb-2"
                   style={{
                     color: "#4E3B2B",
                     fontFamily: "'Playfair Display', serif",
+                    fontSize: "clamp(1.6rem, 2.5vw, 2rem)",
                   }}
                 >
                   {recoverMode ? "Recuperar contraseña" : "Iniciar sesión"}
@@ -84,7 +82,10 @@ export default function LoginPage() {
 
                 <p
                   className="text-muted mb-4"
-                  style={{ color: "#6C584C", fontSize: "0.95rem" }}
+                  style={{
+                    color: "#6C584C",
+                    fontSize: "clamp(0.9rem, 1.2vw, 1rem)",
+                  }}
                 >
                   {recoverMode
                     ? "Ingresa tu correo para recibir un enlace de recuperación."
@@ -105,13 +106,13 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                {/* FORMULARIO */}
+                {/* Formulario */}
                 <form onSubmit={onSubmit} noValidate>
                   {/* Email */}
                   <div className="mb-3 text-start">
                     <label
                       className="form-label fw-semibold"
-                      style={{ color: "#4E3B2B" }}
+                      style={{ color: "#4E3B2B", fontSize: "0.95rem" }}
                     >
                       Correo electrónico
                     </label>
@@ -130,7 +131,6 @@ export default function LoginPage() {
                       style={{
                         borderColor: "#E9DED2",
                         backgroundColor: "#FFFDF9",
-                        transition: "all 0.3s ease",
                       }}
                     />
                     {touched && errors.email && (
@@ -143,7 +143,7 @@ export default function LoginPage() {
                     <div className="mb-4 text-start">
                       <label
                         className="form-label fw-semibold"
-                        style={{ color: "#4E3B2B" }}
+                        style={{ color: "#4E3B2B", fontSize: "0.95rem" }}
                       >
                         Contraseña
                       </label>
@@ -191,6 +191,7 @@ export default function LoginPage() {
                       border: "none",
                       color: "white",
                       borderRadius: "50px",
+                      fontSize: "clamp(0.9rem, 1.2vw, 1rem)",
                       transition: "all 0.3s ease",
                     }}
                   >
@@ -201,7 +202,7 @@ export default function LoginPage() {
                       : "Entrar"}
                   </button>
 
-                  {/* 🟢 Botón Google real */}
+                  {/* Botón Google */}
                   {!recoverMode && (
                     <button
                       type="button"
@@ -212,6 +213,7 @@ export default function LoginPage() {
                         border: "2px solid #B08968",
                         color: "#4E3B2B",
                         borderRadius: "50px",
+                        fontSize: "clamp(0.9rem, 1.2vw, 1rem)",
                         transition: "all 0.3s ease",
                       }}
                     >
@@ -224,7 +226,7 @@ export default function LoginPage() {
                   )}
                 </form>
 
-                {/* LINKS INFERIORES */}
+                {/* LINKS inferiores */}
                 <div className="text-center mt-4">
                   {!recoverMode ? (
                     <>
@@ -233,16 +235,10 @@ export default function LoginPage() {
                           color: "#B08968",
                           cursor: "pointer",
                           textDecoration: "underline",
-                          transition: "color 0.3s ease",
                           marginBottom: "0.8rem",
+                          fontSize: "0.9rem",
                         }}
                         onClick={() => setRecoverMode(true)}
-                        onMouseOver={(e) =>
-                          (e.currentTarget.style.color = "#A1724F")
-                        }
-                        onMouseOut={(e) =>
-                          (e.currentTarget.style.color = "#B08968")
-                        }
                       >
                         ¿Olvidaste tu contraseña?
                       </p>
@@ -256,12 +252,6 @@ export default function LoginPage() {
                             fontWeight: 600,
                             cursor: "pointer",
                           }}
-                          onMouseOver={(e) =>
-                            (e.currentTarget.style.color = "#A1724F")
-                          }
-                          onMouseOut={(e) =>
-                            (e.currentTarget.style.color = "#B08968")
-                          }
                         >
                           Quiero registrarme
                         </span>
@@ -301,6 +291,12 @@ export default function LoginPage() {
         }
         .animate-fadein {
           animation: fadein 0.6s ease forwards;
+        }
+
+        @media (max-width: 768px) {
+          .card-body {
+            padding: 2rem 1.5rem !important;
+          }
         }
       `}</style>
     </section>
