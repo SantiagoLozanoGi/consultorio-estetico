@@ -380,6 +380,11 @@ export default function AgendarPage() {
 
                     {/* Botones */}
                     <div className="d-flex flex-wrap gap-2">
+                      
+
+                     
+                      
+
                       <button
                         type="submit"
                         className="btn btn-lg text-white"
