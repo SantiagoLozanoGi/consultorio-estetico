@@ -1,223 +1,273 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
 export default function ProcedimientosDestacados() {
   const procedimientos = [
-    
     {
       id: 1,
-      img: "/imagenes/P_LimpiezaFacial.jpg",
-      title: "Limpieza Facial",
-      desc: "Tratamiento para suavizar y rejuvenecer la piel.",
-      icon: "fa-spa",
+      img: "/imagenes/limpiezaFacial2.jpg",
+      title: "Hydrafacial",
+      desc: "Tecnología avanzada que limpia, exfolia, extrae e hidrata la piel en una sola sesión. Ideal para mejorar textura, luminosidad y salud cutánea.",
+      icon: "fa-droplet",
     },
     {
       id: 2,
       img: "/imagenes/P_Botox.jpg",
-      title: "Bótox",
-      desc: "Suaviza arrugas de expresión con resultados naturales.",
+      title: "Toxina Botulínica (Bótox)",
+      desc: "Relaja los músculos de expresión para suavizar arrugas del rostro sin alterar la naturalidad de tus gestos.",
       icon: "fa-syringe",
     },
     {
       id: 3,
-      img: "/imagenes/P_Acido_hialuronico.jpg",
-      title: "Ácido Hialurónico en labios",
-      desc: "Restaura volumen y contorno de los labios.",
-      icon: "fa-cloud",
+      img: "/imagenes/P_Acido_hialuronico_labios.jpg",
+      title: "Ácido Hialurónico en Labios",
+      desc: "Define, hidrata y aporta volumen natural a los labios, resaltando su forma de manera armónica y segura.",
+      icon: "fa-lips",
     },
     {
       id: 4,
-      img: "/imagenes/P_Perfilamiento_Facial.jpg",
+      img: "/imagenes/P_Acido_hialuronicoFacial.jpg",
       title: "Ácido Hialurónico Facial",
-      desc: "Rellenos para perfilar y armonizar el rostro.",
+      desc: "Rellenos dérmicos para perfilar el rostro, restaurar volumen y realzar tus facciones con un efecto rejuvenecedor inmediato.",
       icon: "fa-face-smile",
     },
     {
       id: 5,
       img: "/imagenes/P_Tratamiento_Acne.jpg",
-      title: "Tratamiento Para El Acné",
-      desc: "Desinflama y mejora la textura de la piel.",
+      title: "Tratamiento para el Acné",
+      desc: "Controla la producción de grasa, desinflama y mejora la textura de la piel reduciendo brotes y marcas.",
       icon: "fa-notes-medical",
     },
     {
       id: 6,
       img: "/imagenes/P_Tratamiento_Manchas.jpg",
-      title: "Tratamiento Para Manchas",
-      desc: "Inhibe melanina y renueva la piel.",
+      title: "Tratamiento para Manchas (Peeling)",
+      desc: "Reduce hiperpigmentaciones y unifica el tono de la piel con protocolos médicos personalizados.",
       icon: "fa-sun",
     },
-
- 
     {
       id: 7,
-      img: "/imagenes/P_Peeling_Quimico.jpg",
-      title: "Peeling Químico",
-      desc: "Renovación controlada para mejorar textura, poros y manchas.",
-      icon: "fa-flask",
-    },
-    {
-      id: 8,
-      img: "/imagenes/P_PRP_Facial.jpg",
-      title: "Plasma Rico en Plaquetas (PRP)",
-      desc: "Bioestimulación con tu propio plasma para firmeza y brillo.",
-      icon: "fa-vial",
-    },
-    {
-      id: 9,
-      img: "/imagenes/P_Microdermoabrasion.jpg",
-      title: "Microdermoabrasión",
-      desc: "Exfoliación mecánica suave que alisa y unifica el tono.",
-      icon: "fa-gem",
-    },
-    {
-      id: 10,
-      img: "/imagenes/P_Dermapen.jpg",
-      title: "Dermapen (Microneedling)",
-      desc: "Microperforaciones que estimulan colágeno y mejoran cicatrices.",
-      icon: "fa-pen",
-    },
-    {
-      id: 11,
-      img: "/imagenes/P_Rinomodelacion.jpg",
-      title: "Rinomodelación",
-      desc: "Corrección no quirúrgica de perfil nasal con ácido hialurónico.",
-      icon: "fa-face-grin-stars",
-    },
-    {
-      id: 12,
-      img: "/imagenes/P_Hilos_Tensores.jpg",
-      title: "Hilos Tensores",
-      desc: "Efecto lifting inmediato y progresivo sin cirugía.",
+      img: "/imagenes/P_tratamientoEstrias.jpg",
+      title: "Tratamiento de Estrías",
+      desc: "Terapias combinadas que estimulan el colágeno y mejoran la apariencia de estrías recientes y antiguas.",
       icon: "fa-wand-magic-sparkles",
-    },
-    {
-      id: 13,
-      img: "/imagenes/P_Lipo_Papada_Enzimatica.jpg",
-      title: "Lipo de Papada Enzimática",
-      desc: "Reduce grasa submentoniana y define el contorno mandibular.",
-      icon: "fa-droplet",
-    },
-    {
-      id: 14,
-      img: "/imagenes/P_Mesoterapia_Corporal.jpg",
-      title: "Mesoterapia Corporal",
-      desc: "Cocteles lipolíticos para reducción de medidas y piel más firme.",
-      icon: "fa-syringe",
-    },
-    {
-      id: 15,
-      img: "/imagenes/P_Depilacion_Laser.jpg",
-      title: "Depilación Láser",
-      desc: "Elimina vello de forma progresiva y segura para todo tipo de piel.",
-      icon: "fa-bolt",
-    },
-    {
-      id: 16,
-      img: "/imagenes/P_Hidrafacial.jpg",
-      title: "Hidratación Profunda (Hydrafacial)",
-      desc: "Limpieza, extracción e hidratación intensiva en una sola sesión.",
-      icon: "fa-droplet",
     },
   ];
 
   return (
-    <>
-      {/* PROCEDIMIENTOS DESTACADOS (estilo tarjeta flotante) */}
-      <section
-        className="py-5"
+    <section
+      className="py-5"
+      style={{
+        background: "linear-gradient(180deg, #FAF9F7 0%, #FFFFFF 100%)",
+      }}
+    >
+      <div
+        className="container shadow-lg p-5 rounded-4"
         style={{
-          background: "linear-gradient(180deg,#f6f9ff 0%,#ffffff 100%)",
+          background: "rgba(255, 255, 255, 0.9)",
+          backdropFilter: "blur(10px)",
+          marginTop: "-60px",
+          border: "1px solid #E9DED2",
         }}
       >
-        <div
-          className="container shadow-lg p-5 rounded-4"
-          style={{
-            background: "rgba(255, 255, 255, 0.9)",
-            backdropFilter: "blur(10px)",
-            marginTop: "-80px",
-            border: "1px solid #e0e0e0",
-          }}
-        >
-          <div className="text-center mb-5">
-            <h2 className="fw-bold" style={{ color: "#052368ff" }}>
-              Procedimientos 
-            </h2>
-            <p className="lead" style={{ color: "#333" }}>
-              
-            </p>
-          </div>
+        {/* Encabezado */}
+        <div className="text-center mb-5">
+          <h2
+            className="fw-bold"
+            style={{
+              color: "#4E3B2B",
+              fontFamily: "'Playfair Display', serif",
+            }}
+          >
+            Procedimientos Destacados
+          </h2>
+          <p
+            className="lead"
+            style={{
+              color: "#6C584C",
+              maxWidth: "700px",
+              margin: "0 auto",
+            }}
+          >
+            Tratamientos estéticos y médicos diseñados para resaltar tu belleza
+            natural, con resultados armónicos, seguros y personalizados.
+          </p>
+        </div>
 
-          <div className="row g-5 justify-content-center">
-            {procedimientos.map((p) => (
-              <div className="col-12 col-md-6 col-lg-4" key={p.id}>
+        {/* Tarjetas */}
+        <div className="row g-5 justify-content-center">
+          {procedimientos.map((p) => (
+            <div className="col-12 col-md-6 col-lg-4" key={p.id}>
+              <div
+                className="position-relative"
+                style={{
+                  paddingBottom: "90px",
+                }}
+              >
+                {/* Imagen principal */}
                 <div
-                  className="position-relative"
-                  style={{ paddingBottom: "90px" }}
+                  className="rounded-4 overflow-hidden shadow-sm"
+                  style={{
+                    transition: "transform 0.4s ease, box-shadow 0.4s ease",
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = "scale(1.03)";
+                    e.currentTarget.style.boxShadow =
+                      "0 10px 20px rgba(176, 137, 104, 0.3)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow =
+                      "0 5px 12px rgba(0,0,0,0.08)";
+                  }}
                 >
-                  <div className="rounded-4 overflow-hidden shadow-sm">
-                    <Image
-                      src={p.img}
-                      alt={p.title}
-                      width={900}
-                      height={1200}
-                      className="w-100"
-                      style={{ height: 420, objectFit: "cover" }}
-                    />
-                  </div>
+                  <Image
+                    src={p.img}
+                    alt={p.title}
+                    width={900}
+                    height={1200}
+                    className="w-100"
+                    style={{
+                      height: 420,
+                      objectFit: "cover",
+                      transition: "transform 0.4s ease",
+                    }}
+                  />
+                </div>
 
+                {/* Tarjeta inferior */}
+                <div
+                  className="position-absolute start-0 end-0"
+                  style={{ bottom: 0 }}
+                >
                   <div
-                    className="position-absolute start-0 end-0"
-                    style={{ bottom: 0 }}
+                    className="rounded-4 shadow p-4 mx-3"
+                    style={{
+                      backgroundColor: "#FAF9F7",
+                      border: "1px solid #E9DED2",
+                      transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                    }}
+                    onMouseOver={(e) => {
+                      e.currentTarget.style.transform = "translateY(-5px)";
+                      e.currentTarget.style.boxShadow =
+                        "0 8px 16px rgba(0,0,0,0.1)";
+                    }}
+                    onMouseOut={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow =
+                        "0 4px 10px rgba(0,0,0,0.05)";
+                    }}
                   >
-                    <div className="bg-white rounded-4 shadow p-4 mx-3">
-                      <div className="d-flex align-items-start">
-                        <div
-                          className="me-3 d-flex align-items-center justify-content-center rounded"
+                    <div className="d-flex align-items-start">
+                      {/* Icono animado */}
+                      <div
+                        className="me-3 d-flex align-items-center justify-content-center rounded-circle"
+                        style={{
+                          width: 50,
+                          height: 50,
+                          backgroundColor: "#E9DED2",
+                          color: "#B08968",
+                          transition: "transform 0.4s ease, background 0.4s ease",
+                        }}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.backgroundColor = "#B08968";
+                          e.currentTarget.style.color = "#FFF";
+                          e.currentTarget.style.transform = "rotate(15deg)";
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.backgroundColor = "#E9DED2";
+                          e.currentTarget.style.color = "#B08968";
+                          e.currentTarget.style.transform = "rotate(0deg)";
+                        }}
+                      >
+                        <i className={`fas ${p.icon} fa-lg`}></i>
+                      </div>
+
+                      <div>
+                        <h5
+                          className="fw-bold mb-2"
                           style={{
-                            width: 44,
-                            height: 44,
-                            backgroundColor: "#E8F0FF",
-                            color: "#1E63FF",
+                            color: "#4E3B2B",
+                            fontFamily: "'Playfair Display', serif",
                           }}
                         >
-                          <i className={`fas ${p.icon}`}></i>
-                        </div>
-                        <div>
-                          <h5
-                            className="fw-bold mb-2"
-                            style={{ color: "#0B2A3B" }}
-                          >
-                            {p.title}
-                          </h5>
-                          <p
-                            className="text-muted mb-3"
-                            style={{ lineHeight: 1.5 }}
-                          >
-                            {p.desc}
-                          </p>
+                          {p.title}
+                        </h5>
+                        <p
+                          className="text-muted mb-3"
+                          style={{
+                            color: "#6C584C",
+                            lineHeight: 1.5,
+                            fontSize: "0.95rem",
+                          }}
+                        >
+                          {p.desc}
+                        </p>
 
-                          <Link
-                            href={`/procedimientos/${p.id}`}
-                            className="text-decoration-none fw-semibold"
-                            style={{ color: "#1E63FF" }}
-                          >
-                            Ver más{" "}
-                            <i className="fas fa-arrow-right ms-1"></i>
-                          </Link>
-                        </div>
+                        <Link
+                          href={`/procedimientos/${p.id}`}
+                          className="fw-semibold"
+                          style={{
+                            color: "#B08968",
+                            textDecoration: "none",
+                            transition: "color 0.3s ease, transform 0.3s ease",
+                            display: "inline-block",
+                          }}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.color = "#A1724F";
+                            e.currentTarget.style.transform = "translateX(3px)";
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.color = "#B08968";
+                            e.currentTarget.style.transform = "translateX(0)";
+                          }}
+                        >
+                          Ver más <i className="fas fa-arrow-right ms-1"></i>
+                        </Link>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-5">
-            
-          </div>
+            </div>
+          ))}
         </div>
-      </section>
-    </>
+
+        {/* Botón final */}
+        <div className="text-center mt-5">
+          <Link
+            href="/agendar"
+            className="fw-semibold"
+            style={{
+              display: "inline-block",
+              padding: "0.9rem 2.5rem",
+              borderRadius: "40px",
+              border: "2px solid #B08968",
+              color: "#4E3B2B",
+              backgroundColor: "transparent",
+              transition: "all 0.35s ease",
+              textDecoration: "none",
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.backgroundColor = "#B08968";
+              e.currentTarget.style.color = "#FFF";
+              e.currentTarget.style.transform = "scale(1.05)";
+              e.currentTarget.style.boxShadow =
+                "0 6px 16px rgba(176, 137, 104, 0.4)";
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = "#4E3B2B";
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "none";
+            }}
+          >
+            <i className="fas fa-calendar-check me-2"></i> Agendar una cita
+          </Link>
+        </div>
+      </div>
+    </section>
   );
 }
