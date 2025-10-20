@@ -33,7 +33,7 @@ const PRECIOS: Record<string, number> = {
   "Tratamiento para Manchas": 300000,
 };
 
-const WHATSAPP_NUM = "573138210700"; // +57 313 821 0700 (sin +)
+const WHATSAPP_NUM = "573138210700"; 
 const CLINIC_EMAIL = "etr510@gmail.com";
 
 const fmtCOP = (v: number) =>
@@ -327,34 +327,21 @@ END:VCALENDAR`;
                     </div>
 
                     <div className="d-flex flex-wrap gap-2">
+                      
+
+                     
+                      
+
                       <button
                         type="submit"
-                        className="btn btn-primary btn-lg"
-                        style={{ backgroundColor: "#052368", borderColor: "#052368" }}
-                        disabled={!formIsValid && touched}
-                        title="Enviar por WhatsApp"
-                      >
-                        <i className="fab fa-whatsapp me-2"></i> Solicitar por WhatsApp
-                      </button>
-
-                      <a
-                        className="btn btn-outline-primary btn-lg"
-                        style={{ borderColor: "#052368", color: "#052368" }}
-                        href={buildMailto()}
-                        onClick={(e) => (!formIsValid ? (setTouched(true), e.preventDefault()) : undefined)}
-                      >
-                        <i className="fas fa-envelope me-2"></i> Enviar por correo
-                      </a>
-
-                      <button
-                        type="button"
-                        className="btn btn-light btn-lg"
+                        className="btn btn-primary btn-lg w-100"
+                        style={{ backgroundColor: "#052368ff", borderColor: "#052368ff" }}
                         onClick={() => {
                           setTouched(true);
                           if (formIsValid) downloadICS();
                         }}
                       >
-                        <i className="fas fa-calendar-plus me-2"></i> Añadir a mi calendario
+                        Agendar
                       </button>
                     </div>
                   </form>
