@@ -7,7 +7,7 @@ import Galeria3D from "@/components/Galeria3D";
 import Counter from "@/components/Counter";
 
 export default function HomePage() {
-  // Carrusel principal
+ 
   const imagenes = [
     "/imagenes/carrucel1.jpg",
     "/imagenes/carrucel2.jpg",
@@ -15,8 +15,6 @@ export default function HomePage() {
     "/imagenes/carrucel4.jpg",
     "/imagenes/carrucel5.jpg",
     "/imagenes/carrucel6.jpg",
-    "/imagenes/carrucel9.jpg",
-    "/imagenes/carrucel10.jpg",
   ];
 
   const [imagenActual, setImagenActual] = useState(0);
@@ -28,7 +26,6 @@ export default function HomePage() {
     return () => clearInterval(intervalo);
   }, [imagenes.length]);
 
-  // Procedimientos varios
   const tratamientos = [
     {
       img: "/imagenes/P_Tratamiento_Acne.jpg",
@@ -54,18 +51,19 @@ export default function HomePage() {
     <>
       {/* HERO */}
       <section
-        className="d-flex align-items-stretch"
+        className="hero d-flex flex-column flex-lg-row align-items-stretch"
         style={{
           height: "100vh",
           overflow: "hidden",
           position: "relative",
         }}
       >
-        {/* Mitad izquierda: carrusel */}
+        {/* Carrusel (izquierda) */}
         <div
-          className="hero-left position-relative"
+          className="hero-left position-relative d-none d-md-block"
+
           style={{
-            flex: "1 1 50%",
+            flex: "1 1 40%",
             height: "100%",
             overflow: "hidden",
             position: "relative",
@@ -95,24 +93,38 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+          {/* Carrusel estático visible solo en móviles */}
+<div className="d-block d-md-none w-100 position-relative" style={{ height: "60vh" }}>
+  <Image
+    src={imagenes[0]}
+    alt="Imagen destacada"
+    fill
+    priority
+    style={{
+      objectFit: "cover",
+      objectPosition: "center",
+    }}
+  />
+</div>
 
-        {/* Mitad derecha */}
+        {/* Texto (derecha) */}
         <div
-          className="hero-right d-flex flex-column justify-content-center"
+          className="hero-right d-flex flex-column justify-content-center text-center text-lg-start"
           style={{
             flex: "1 1 50%",
             background: "linear-gradient(135deg, #FAF9F7 0%, #E9DED2 100%)",
-            padding: "4rem",
+            padding: "3rem 2rem 4rem",
             color: "#4E3B2B",
           }}
         >
           <div className="container">
             <h1
-              className="fw-bold display-5 mb-4"
+              className="fw-bold mb-4"
               style={{
                 color: "#4E3B2B",
                 fontFamily: "'Playfair Display', serif",
-                lineHeight: "1.2",
+                fontSize: "clamp(1.8rem, 4vw, 2.5rem)",
+                lineHeight: "1.3",
               }}
             >
               ¡La innovadora y exclusiva tecnología de Hydrafacial, está en el
@@ -123,41 +135,32 @@ export default function HomePage() {
               className="lead mb-4"
               style={{
                 color: "#6C584C",
-                fontSize: "1.1rem",
-                lineHeight: "1.6",
+                fontSize: "clamp(1rem, 2vw, 1.1rem)",
+                lineHeight: "1.7",
               }}
             >
               “El bienestar verdadero nace del equilibrio: cuerpo fuerte, mente
-              serena y emociones en armonía. La salud y la estética se
-              construyen cultivando hábitos que nos mantienen jóvenes,
-              energéticos y en paz.”
+              serena y emociones en armonía. La salud y la estética se construyen
+              cultivando hábitos que nos mantienen jóvenes y en paz.”
             </p>
 
             <Link
               href="/agendar"
-              className="btn btn-lg fw-semibold d-inline-flex align-items-center justify-content-center"
+              className="btn btn-lg fw-semibold d-inline-flex align-items-center justify-content-center mx-auto mx-lg-0"
               style={{
                 backgroundColor: "#B08968",
                 color: "white",
-                border: "none",
                 borderRadius: "50px",
                 padding: "0.9rem 2.5rem",
-                boxShadow: "0 4px 12px rgba(176, 137, 104, 0.25)",
-                fontSize: "1.05rem",
-                transition:
-                  "all 0.35s ease, transform 0.2s ease, box-shadow 0.3s ease",
+                transition: "all 0.3s ease",
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.backgroundColor = "#A1724F";
-                e.currentTarget.style.transform = "scale(1.07)";
-                e.currentTarget.style.boxShadow =
-                  "0 6px 16px rgba(161, 114, 79, 0.4)";
+                e.currentTarget.style.transform = "scale(1.05)";
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.backgroundColor = "#B08968";
                 e.currentTarget.style.transform = "scale(1)";
-                e.currentTarget.style.boxShadow =
-                  "0 4px 12px rgba(176, 137, 104, 0.25)";
               }}
             >
               <i className="fas fa-calendar-check me-2"></i> Agendar Cita
@@ -180,10 +183,10 @@ export default function HomePage() {
                 className="card border-0 shadow-lg overflow-hidden"
                 style={{ backgroundColor: "#FAF9F7" }}
               >
-                <div className="row g-0 align-items-center">
-                  {/* Imagen y contadores */}
+                <div className="row g-0 align-items-center flex-column flex-lg-row text-center text-lg-start">
+                  {/* Imagen */}
                   <div
-                    className="col-lg-4 p-4 text-center"
+                    className="col-lg-4 p-4"
                     style={{ backgroundColor: "#FFFDF9" }}
                   >
                     <Image
@@ -191,90 +194,60 @@ export default function HomePage() {
                       alt="Dra. Juliet Medina"
                       width={320}
                       height={320}
-                      className="img-fluid rounded-4 object-fit-cover shadow-sm"
-                      style={{ aspectRatio: "1/1" }}
+                      className="img-fluid rounded-4 shadow-sm"
+                      style={{ aspectRatio: "1/1", objectFit: "cover" }}
                     />
-                    <div className="d-flex justify-content-center gap-5 mt-4">
+                    <div className="d-flex justify-content-center gap-4 mt-4">
                       <Counter end={3000} label="Pacientes" suffix="+" duration={2500} />
                       <Counter end={15} label="Procedimientos" suffix="+" duration={2000} />
                     </div>
                   </div>
 
-                  {/* Contenido */}
-                  <div className="col-lg-8 p-4 p-lg-5 text-center text-lg-start">
-                    <div
-                      className="d-flex align-items-center mb-4 justify-content-center justify-content-lg-start flex-wrap"
-                      style={{ gap: "12px" }}
+                  {/* Texto */}
+                  <div className="col-lg-8 p-4 p-lg-5">
+                    <h2
+                      className="fw-bold mb-3"
+                      style={{
+                        color: "#4E3B2B",
+                        fontFamily: "'Playfair Display', serif",
+                      }}
                     >
-                      <span
-                        className="badge"
-                        style={{
-                          backgroundColor: "#E9DED2",
-                          color: "#4E3B2B",
-                          fontWeight: 600,
-                          fontSize: "0.9rem",
-                          padding: "0.5rem 1rem",
-                          borderRadius: "0.75rem",
-                        }}
-                      >
-                        Medicina Estética • Antienvejecimiento
-                      </span>
-
-                      <Link
-                        href="/vanessa-medina"
-                        className="fw-bold"
-                        style={{
-                          color: "#4E3B2B",
-                          fontFamily: "'Playfair Display', serif",
-                          fontSize: "2rem",
-                          textDecoration: "none",
-                          transition: "color 0.3s ease",
-                        }}
-                        onMouseOver={(e) => (e.currentTarget.style.color = "#A1724F")}
-                        onMouseOut={(e) => (e.currentTarget.style.color = "#4E3B2B")}
-                      >
-                        Dra. Juliet Medina
-                      </Link>
-                    </div>
-
+                      Dra. Juliet Medina
+                    </h2>
                     <p
-                      className="text-muted mb-4"
-                      style={{ color: "#6C584C", fontSize: "1rem" }}
+                      style={{
+                        color: "#6C584C",
+                        fontSize: "1rem",
+                        lineHeight: "1.6",
+                      }}
                     >
                       Médica especialista en Medicina Estética con más de 5 años
                       de experiencia. Tratamientos personalizados con enfoque en
                       resultados naturales y bienestar integral.
                     </p>
 
-                    <div className="mt-4 text-center text-lg-start">
-                      <Link
-                        href="/doctora"
-                        className="fw-semibold"
-                        style={{
-                          display: "inline-block",
-                          padding: "0.85rem 2.2rem",
-                          borderRadius: "40px",
-                          border: "2px solid #B08968",
-                          color: "#4E3B2B",
-                          fontSize: "1.05rem",
-                          backgroundColor: "transparent",
-                          transition: "all 0.35s ease",
-                          textDecoration: "none",
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.backgroundColor = "#B08968";
-                          e.currentTarget.style.color = "#FFF";
-                          e.currentTarget.style.transform = "scale(1.05)";
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                          e.currentTarget.style.color = "#4E3B2B";
-                          e.currentTarget.style.transform = "scale(1)";
-                        }}
-                      >
-                        Conocer más sobre la doctora
-                      </Link>
-                    </div>
+                    <Link
+                      href="/doctora"
+                      className="fw-semibold mt-3 d-inline-block"
+                      style={{
+                        padding: "0.85rem 2.2rem",
+                        borderRadius: "40px",
+                        border: "2px solid #B08968",
+                        color: "#4E3B2B",
+                        textDecoration: "none",
+                        transition: "all 0.3s ease",
+                      }}
+                      onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = "#B08968";
+                        e.currentTarget.style.color = "#FFF";
+                      }}
+                      onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "#4E3B2B";
+                      }}
+                    >
+                      Conocer más sobre la doctora
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -322,20 +295,14 @@ export default function HomePage() {
             >
               Procedimientos Varios
             </h2>
-            <p
-              className="lead"
-              style={{
-                color: "#6C584C",
-                fontSize: "1.1rem",
-              }}
-            >
+            <p className="lead" style={{ color: "#6C584C" }}>
               Descubre nuestros tratamientos más solicitados y efectivos
             </p>
           </div>
 
           <div className="row g-4">
             {tratamientos.map((p, i) => (
-              <div className="col-md-6 col-lg-4" key={i}>
+              <div className="col-12 col-md-6 col-lg-4" key={i}>
                 <div
                   className="card h-100 shadow-sm border-0 rounded-4 overflow-hidden"
                   style={{
@@ -344,13 +311,9 @@ export default function HomePage() {
                   }}
                   onMouseOver={(e) => {
                     e.currentTarget.style.transform = "translateY(-6px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 8px 20px rgba(176, 137, 104, 0.3)";
                   }}
                   onMouseOut={(e) => {
                     e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 12px rgba(176, 137, 104, 0.15)";
                   }}
                 >
                   <Image
@@ -365,7 +328,7 @@ export default function HomePage() {
                       borderBottom: "3px solid #E9DED2",
                     }}
                   />
-                  <div className="card-body p-4">
+                  <div className="card-body p-4 text-center text-lg-start">
                     <h5
                       className="fw-bold mb-2"
                       style={{
@@ -377,10 +340,7 @@ export default function HomePage() {
                     </h5>
                     <p
                       className="text-muted mb-3"
-                      style={{
-                        color: "#6C584C",
-                        lineHeight: "1.6",
-                      }}
+                      style={{ color: "#6C584C" }}
                     >
                       {p.desc}
                     </p>
@@ -399,10 +359,7 @@ export default function HomePage() {
                       }
                     >
                       Ver más{" "}
-                      <i
-                        className="fas fa-arrow-right ms-1"
-                        style={{ color: "#B08968" }}
-                      ></i>
+                      <i className="fas fa-arrow-right ms-1"></i>
                     </Link>
                   </div>
                 </div>

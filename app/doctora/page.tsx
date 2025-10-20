@@ -6,24 +6,24 @@ import Link from "next/link";
 export default function DoctoraPage() {
   return (
     <main>
-      {/* SECCIÓN PRINCIPAL */}
+      {/* 🩺 SECCIÓN PRINCIPAL RESPONSIVE */}
       <section
         style={{
           background: "linear-gradient(180deg, #FAF9F7 0%, #F1E9E0 100%)",
-          padding: "5rem 2rem",
+          padding: "4rem 1rem",
         }}
       >
         <div
           className="container d-flex flex-column flex-lg-row align-items-center justify-content-center text-center text-lg-start"
-          style={{ gap: "3rem" }}
+          style={{ gap: "2.5rem" }}
         >
-          {/* Imagen izquierda */}
+          {/* 📸 Imagen izquierda visible solo en escritorio */}
           <div className="d-none d-lg-block">
             <Image
-              src="/imagenes/doctoraPerfil2.jpg" 
+              src="/imagenes/doctoraPerfil2.jpg"
               alt="Dra. Vanessa Medina"
-              width={350}
-              height={450}
+              width={320}
+              height={430}
               className="rounded-4 shadow-lg"
               style={{
                 objectFit: "cover",
@@ -32,14 +32,14 @@ export default function DoctoraPage() {
             />
           </div>
 
-          {/* Texto central */}
-          <div style={{ maxWidth: "600px" }}>
+          {/* 📄 Texto central adaptado */}
+          <div className="text-center text-lg-start" style={{ maxWidth: "620px" }}>
             <h2
               className="fw-bold mb-3"
               style={{
                 color: "#4E3B2B",
                 fontFamily: "'Playfair Display', serif",
-                textAlign: "center",
+                fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
               }}
             >
               Dra. Vanessa Medina
@@ -49,29 +49,25 @@ export default function DoctoraPage() {
               style={{
                 color: "#6C584C",
                 lineHeight: "1.7",
-                fontSize: "1.1rem",
-                textAlign: "center",
+                fontSize: "clamp(1rem, 1.5vw, 1.1rem)",
               }}
             >
-              Especialista en Medicina Estética, Antienvejecimiento y Salud
-              Integral. Combinando ciencia y arte para lograr resultados
-              naturales, armónicos y personalizados.
+              Especialista en Medicina Estética, Antienvejecimiento y Salud Integral.  
+              Combinando ciencia y arte para lograr resultados naturales, armónicos y personalizados.
             </p>
 
             <p
               style={{
                 color: "#4E3B2B",
-                fontSize: "0.95rem",
-                textAlign: "center",
+                fontSize: "clamp(0.9rem, 1.3vw, 1rem)",
               }}
             >
-              Con más de 5 años de experiencia en tratamientos faciales y
-              corporales, la doctora se especializa en técnicas mínimamente
-              invasivas, priorizando siempre la seguridad, la armonía y el
-              bienestar integral de cada paciente.
+              Con más de 5 años de experiencia en tratamientos faciales y corporales, la doctora se especializa
+              en técnicas mínimamente invasivas, priorizando siempre la seguridad, la armonía y el bienestar integral
+              de cada paciente.
             </p>
 
-            <div className="text-center mt-4">
+            <div className="text-center text-lg-start mt-4">
               <Link
                 href="/agendar"
                 className="fw-semibold"
@@ -84,6 +80,7 @@ export default function DoctoraPage() {
                   backgroundColor: "transparent",
                   transition: "all 0.35s ease",
                   textDecoration: "none",
+                  fontSize: "clamp(0.9rem, 1.3vw, 1rem)",
                 }}
                 onMouseOver={(e) => {
                   e.currentTarget.style.backgroundColor = "#B08968";
@@ -104,13 +101,13 @@ export default function DoctoraPage() {
             </div>
           </div>
 
-          {/* Imagen derecha */}
+          {/* 📸 Imagen derecha visible solo en escritorio */}
           <div className="d-none d-lg-block">
             <Image
-              src="/imagenes/doctoraPerfil3.jpg" 
+              src="/imagenes/doctoraPerfil3.jpg"
               alt="Dra. Vanessa Medina"
-              width={350}
-              height={450}
+              width={320}
+              height={430}
               className="rounded-4 shadow-lg"
               style={{
                 objectFit: "cover",
@@ -119,125 +116,138 @@ export default function DoctoraPage() {
             />
           </div>
         </div>
+
+        {/* ✅ En móvil, mostramos una imagen centrada */}
+        <div className="d-lg-none text-center mt-4">
+          <Image
+            src="/imagenes/doctoraPerfil2.jpg"
+            alt="Dra. Vanessa Medina"
+            width={250}
+            height={350}
+            className="rounded-4 shadow-lg img-fluid"
+            style={{ border: "3px solid #E9DED2" }}
+          />
+        </div>
       </section>
 
-      {/* SECCIÓN DE ESPECIALIDADES */}
-<section
-  style={{
-    background: "#FAF9F7",
-    padding: "4rem 2rem",
-    borderTop: "1px solid #E9DED2",
-  }}
->
-  <div className="container text-center">
-    <h3
-      className="fw-bold mb-4"
-      style={{
-        color: "#3B2A1A",
-        fontFamily: "'Playfair Display', serif",
-      }}
-    >
-      Especialidades y Certificaciones
-    </h3>
-
-    <div className="row justify-content-center g-4">
-      {/* Especialidades */}
-      <div className="col-md-5">
-        <div
-          className="p-4 rounded-4 shadow-sm h-100"
-          style={{
-            backgroundColor: "#FFFDF9",
-            border: "1px solid #E9DED2",
-          }}
-        >
-          <h5
-            className="fw-bold mb-3"
+      {/* 🎓 SECCIÓN ESPECIALIDADES RESPONSIVE */}
+      <section
+        style={{
+          background: "#FAF9F7",
+          padding: "4rem 1rem",
+          borderTop: "1px solid #E9DED2",
+        }}
+      >
+        <div className="container text-center">
+          <h3
+            className="fw-bold mb-4"
             style={{
-              color: "#8C6D4F",
-              fontFamily: "'Poppins', sans-serif",
+              color: "#3B2A1A",
+              fontFamily: "'Playfair Display', serif",
+              fontSize: "clamp(1.5rem, 2.5vw, 2rem)",
             }}
           >
-            Especialidades
-          </h5>
-          <ul className="list-unstyled mb-0 text-start">
-            {[
-              "Medicina Estética",
-              "Antienvejecimiento",
-              "Inyectora Elite",
-              "Salud Integral y Bienestar Facial",
-            ].map((item, i) => (
-              <li
-                key={i}
-                className="mb-2"
+            Especialidades y Certificaciones
+          </h3>
+
+          <div className="row justify-content-center g-4">
+            {/* Especialidades */}
+            <div className="col-12 col-md-6 col-lg-5">
+              <div
+                className="p-4 rounded-4 shadow-sm h-100"
                 style={{
-                  color: "#3B2A1A",
-                  fontSize: "1.05rem",
-                  fontWeight: 500,
+                  backgroundColor: "#FFFDF9",
+                  border: "1px solid #E9DED2",
                 }}
               >
-                <i
-                  className="fas fa-check me-2"
-                  style={{ color: "#B08968" }}
-                ></i>
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+                <h5
+                  className="fw-bold mb-3"
+                  style={{
+                    color: "#8C6D4F",
+                    fontFamily: "'Poppins', sans-serif",
+                  }}
+                >
+                  Especialidades
+                </h5>
+                <ul className="list-unstyled mb-0 text-start">
+                  {[
+                    "Medicina Estética",
+                    "Antienvejecimiento",
+                    "Inyectora Elite",
+                    "Salud Integral y Bienestar Facial",
+                  ].map((item, i) => (
+                    <li
+                      key={i}
+                      className="mb-2"
+                      style={{
+                        color: "#3B2A1A",
+                        fontSize: "1.05rem",
+                        fontWeight: 500,
+                      }}
+                    >
+                      <i
+                        className="fas fa-check me-2"
+                        style={{ color: "#B08968" }}
+                      ></i>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
 
-      {/* Certificaciones */}
-      <div className="col-md-5">
-        <div
-          className="p-4 rounded-4 shadow-sm h-100"
-          style={{
-            backgroundColor: "#FFFDF9",
-            border: "1px solid #E9DED2",
-          }}
-        >
-          <h5
-            className="fw-bold mb-3"
-            style={{
-              color: "#8C6D4F",
-              fontFamily: "'Poppins', sans-serif",
-            }}
-          >
-            Certificaciones
-          </h5>
-          <ul className="list-unstyled mb-0 text-start">
-            {[
-              "Sociedad Colombiana de Medicina Estética",
-              "Diplomado en Medicina Antienvejecimiento",
-              "Magíster en Gerencia Hospitalaria",
-            ].map((item, i) => (
-              <li
-                key={i}
-                className="mb-2"
+            {/* Certificaciones */}
+            <div className="col-12 col-md-6 col-lg-5">
+              <div
+                className="p-4 rounded-4 shadow-sm h-100"
                 style={{
-                  color: "#3B2A1A",
-                  fontSize: "1.05rem",
-                  fontWeight: 500,
+                  backgroundColor: "#FFFDF9",
+                  border: "1px solid #E9DED2",
                 }}
               >
-                <i
-                  className="fas fa-certificate me-2"
-                  style={{ color: "#B08968" }}
-                ></i>
-                {item}
-              </li>
-            ))}
-          </ul>
+                <h5
+                  className="fw-bold mb-3"
+                  style={{
+                    color: "#8C6D4F",
+                    fontFamily: "'Poppins', sans-serif",
+                  }}
+                >
+                  Certificaciones
+                </h5>
+                <ul className="list-unstyled mb-0 text-start">
+                  {[
+                    "Sociedad Colombiana de Medicina Estética",
+                    "Diplomado en Medicina Antienvejecimiento",
+                    "Magíster en Gerencia Hospitalaria",
+                  ].map((item, i) => (
+                    <li
+                      key={i}
+                      className="mb-2"
+                      style={{
+                        color: "#3B2A1A",
+                        fontSize: "1.05rem",
+                        fontWeight: 500,
+                      }}
+                    >
+                      <i
+                        className="fas fa-certificate me-2"
+                        style={{ color: "#B08968" }}
+                      ></i>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  </div>
-</section>
+      </section>
 
-      {/* 🌿 SECCIÓN VALORES Y FILOSOFÍA */}
+      {/* 🌿 SECCIÓN VALORES Y FILOSOFÍA RESPONSIVE */}
       <section
         style={{
           background: "linear-gradient(180deg, #F8F5F0 0%, #FAF9F7 100%)",
-          padding: "5rem 2rem",
+          padding: "5rem 1rem",
         }}
       >
         <div className="container text-center">
@@ -246,6 +256,7 @@ export default function DoctoraPage() {
             style={{
               color: "#4E3B2B",
               fontFamily: "'Playfair Display', serif",
+              fontSize: "clamp(1.5rem, 2.5vw, 2rem)",
             }}
           >
             Filosofía y Valores de la Práctica
@@ -274,7 +285,7 @@ export default function DoctoraPage() {
                 text: "La medicina estética combina precisión médica con sensibilidad artística para resultados perfectos.",
               },
             ].map((v, i) => (
-              <div key={i} className="col-12 col-md-6 col-lg-3">
+              <div key={i} className="col-12 col-sm-6 col-lg-3">
                 <div
                   className="p-4 rounded-4 shadow-sm h-100"
                   style={{
@@ -301,7 +312,10 @@ export default function DoctoraPage() {
                   <h5 className="fw-bold mb-2" style={{ color: "#4E3B2B" }}>
                     {v.title}
                   </h5>
-                  <p className="text-muted" style={{ fontSize: "0.95rem" }}>
+                  <p
+                    className="text-muted"
+                    style={{ fontSize: "0.95rem", lineHeight: "1.5" }}
+                  >
                     {v.text}
                   </p>
                 </div>
