@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 export default function RegisterPage() {
   const router = useRouter();
   const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
   const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [password, setPassword] = useState("");
@@ -40,6 +41,7 @@ export default function RegisterPage() {
     // Redirige a inicio o a agendar
     router.push("/");
   };
+
 
   return (
     <section className="py-5" style={{ background: "linear-gradient(180deg,#f6f9ff 0%,#ffffff 100%)" }}>
