@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { loginUser } from "../utils/auth";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { loginUser } from "../utils/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const [recoverEmail, setRecoverEmail] = useState("");
   const [recoverSent, setRecoverSent] = useState(false);
 
+  // 🧩 Validaciones
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (!/^\S+@\S+\.\S+$/.test(email)) e.email = "Correo no válido";
@@ -24,6 +26,7 @@ export default function LoginPage() {
 
   const isValid = Object.keys(errors).length === 0;
 
+  // 📨 Manejador de login manual
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
@@ -31,6 +34,7 @@ export default function LoginPage() {
     if (!isValid) return;
 
     if (recoverMode) {
+      // Simula envío de recuperación
       setRecoverSent(true);
       setTimeout(() => {
         setRecoverSent(false);
@@ -84,9 +88,10 @@ export default function LoginPage() {
                 >
                   {recoverMode
                     ? "Ingresa tu correo para recibir un enlace de recuperación."
-                    : "Bienvenida de nuevo. Ingresa tus credenciales."}
+                    : "Bienvenida de nuevo. Ingresa tus credenciales o usa tu cuenta de Google."}
                 </p>
 
+                {/* Mensaje de error */}
                 {err && (
                   <div
                     className="alert alert-danger text-center animate-fadein"
@@ -100,6 +105,7 @@ export default function LoginPage() {
                   </div>
                 )}
 
+                {/* FORMULARIO */}
                 <form onSubmit={onSubmit} noValidate>
                   {/* Email */}
                   <div className="mb-3 text-start">
@@ -175,7 +181,7 @@ export default function LoginPage() {
                     </div>
                   )}
 
-                  {/* Submit Button */}
+                  {/* Botón ENTRAR */}
                   <button
                     type="submit"
                     disabled={recoverSent}
@@ -187,18 +193,6 @@ export default function LoginPage() {
                       borderRadius: "50px",
                       transition: "all 0.3s ease",
                     }}
-                    onMouseOver={(e) => {
-                      e.currentTarget.style.backgroundColor = "#A1724F";
-                      e.currentTarget.style.transform = "scale(1.05)";
-                      e.currentTarget.style.boxShadow =
-                        "0 6px 18px rgba(161, 114, 79, 0.35)";
-                    }}
-                    onMouseOut={(e) => {
-                      e.currentTarget.style.backgroundColor = "#B08968";
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow =
-                        "0 4px 12px rgba(176, 137, 104, 0.25)";
-                    }}
                   >
                     {recoverMode
                       ? recoverSent
@@ -207,74 +201,93 @@ export default function LoginPage() {
                       : "Entrar"}
                   </button>
 
-                {/* Links */}
-<div className="text-center mt-4">
-  {!recoverMode ? (
-    <>
-      <p
-        style={{
-          color: "#B08968",
-          cursor: "pointer",
-          textDecoration: "underline",
-          transition: "color 0.3s ease",
-          marginBottom: "0.8rem",
-        }}
-        onClick={() => setRecoverMode(true)}
-        onMouseOver={(e) =>
-          (e.currentTarget.style.color = "#A1724F")
-        }
-        onMouseOut={(e) =>
-          (e.currentTarget.style.color = "#B08968")
-        }
-      >
-        ¿Olvidaste tu contraseña?
-      </p>
-
-      <p style={{ color: "#4E3B2B", fontSize: "0.9rem" }}>
-        ¿No tienes cuenta?{" "}
-        <span
-          onClick={() => router.push("/register")}
-          style={{
-            color: "#B08968",
-            textDecoration: "underline",
-            fontWeight: 600,
-            transition: "color 0.3s ease",
-            cursor: "pointer",
-          }}
-          onMouseOver={(e) =>
-            (e.currentTarget.style.color = "#A1724F")
-          }
-          onMouseOut={(e) =>
-            (e.currentTarget.style.color = "#B08968")
-          }
-        >
-          Quiero registrarme
-        </span>
-      </p>
-    </>
-  ) : (
-    <p
-      onClick={() => setRecoverMode(false)}
-      style={{
-        color: "#B08968",
-        cursor: "pointer",
-        textDecoration: "underline",
-        marginTop: "1rem",
-      }}
-    >
-      Volver al inicio de sesión
-    </p>
-  )}
-</div>
-
+                  {/* 🟢 Botón Google real */}
+                  {!recoverMode && (
+                    <button
+                      type="button"
+                      onClick={() => signIn("google")}
+                      className="btn w-100 mt-3 fw-semibold d-flex align-items-center justify-content-center"
+                      style={{
+                        backgroundColor: "#FFF",
+                        border: "2px solid #B08968",
+                        color: "#4E3B2B",
+                        borderRadius: "50px",
+                        transition: "all 0.3s ease",
+                      }}
+                    >
+                      <i
+                        className="fab fa-google me-2"
+                        style={{ color: "#DB4437" }}
+                      ></i>
+                      Iniciar sesión con Google
+                    </button>
+                  )}
                 </form>
+
+                {/* LINKS INFERIORES */}
+                <div className="text-center mt-4">
+                  {!recoverMode ? (
+                    <>
+                      <p
+                        style={{
+                          color: "#B08968",
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                          transition: "color 0.3s ease",
+                          marginBottom: "0.8rem",
+                        }}
+                        onClick={() => setRecoverMode(true)}
+                        onMouseOver={(e) =>
+                          (e.currentTarget.style.color = "#A1724F")
+                        }
+                        onMouseOut={(e) =>
+                          (e.currentTarget.style.color = "#B08968")
+                        }
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </p>
+                      <p style={{ color: "#4E3B2B", fontSize: "0.9rem" }}>
+                        ¿No tienes cuenta?{" "}
+                        <span
+                          onClick={() => router.push("/register")}
+                          style={{
+                            color: "#B08968",
+                            textDecoration: "underline",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                          onMouseOver={(e) =>
+                            (e.currentTarget.style.color = "#A1724F")
+                          }
+                          onMouseOut={(e) =>
+                            (e.currentTarget.style.color = "#B08968")
+                          }
+                        >
+                          Quiero registrarme
+                        </span>
+                      </p>
+                    </>
+                  ) : (
+                    <p
+                      onClick={() => setRecoverMode(false)}
+                      style={{
+                        color: "#B08968",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                        marginTop: "1rem",
+                      }}
+                    >
+                      Volver al inicio de sesión
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Animaciones */}
+      {/* Animación */}
       <style jsx>{`
         @keyframes fadein {
           from {
@@ -286,7 +299,6 @@ export default function LoginPage() {
             transform: translateY(0);
           }
         }
-
         .animate-fadein {
           animation: fadein 0.6s ease forwards;
         }

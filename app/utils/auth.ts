@@ -3,17 +3,18 @@
 // ✅ Definimos el tipo completo del usuario
 export type User = {
   nombre: string;
-  apellido?: string; // ← agregado (opcional, puedes quitar el ? si quieres hacerlo obligatorio)
+  apellido?: string;
   email: string;
   telefono?: string;
-  password: string; // ⚠️ solo para demo; nunca guardes contraseñas en texto plano en producción
+  password: string;
+  rol?: "admin" | "user"; // nuevo campo para distinguir roles
 };
 
 // 🔐 Claves de almacenamiento local
 const USERS_KEY = "ce_users";
 const CURRENT_KEY = "ce_current_user";
 
-// 📦 Obtener todos los usuarios
+// 📦 Obtener todos los usuarios registrados
 export function getUsers(): User[] {
   if (typeof window === "undefined") return [];
   try {
@@ -38,16 +39,31 @@ export function registerUser(user: User): { ok: boolean; error?: string } {
   const exists = findUserByEmail(user.email);
   if (exists) return { ok: false, error: "Este correo ya está registrado." };
 
+  // 🧠 Lista de correos con rol de administrador
+  const adminEmails = [
+    "admin@clinicamedina.com",
+    "dra.juliet@clinicamedina.com",
+    "dravanessa@clinicamedina.com",
+  ];
+
+  // Si el correo está en la lista, asignamos rol admin
+  const newUser: User = {
+    ...user,
+    rol: adminEmails.includes(user.email.toLowerCase()) ? "admin" : "user",
+  };
+
+  // Agregar el usuario a la lista
   const users = getUsers();
-  users.push(user);
+  users.push(newUser);
   saveUsers(users);
 
-  // ✅ Guarda sesión automática (nombre + correo)
+  // ✅ Guarda sesión automática con rol incluido
   localStorage.setItem(
     CURRENT_KEY,
     JSON.stringify({
-      nombre: `${user.nombre}${user.apellido ? " " + user.apellido : ""}`,
-      email: user.email,
+      nombre: `${newUser.nombre}${newUser.apellido ? " " + newUser.apellido : ""}`,
+      email: newUser.email,
+      rol: newUser.rol,
     })
   );
 
@@ -64,11 +80,13 @@ export function loginUser(
   if (user.password !== password)
     return { ok: false, error: "Contraseña incorrecta." };
 
+  // ✅ Guardar sesión con rol incluido
   localStorage.setItem(
     CURRENT_KEY,
     JSON.stringify({
       nombre: `${user.nombre}${user.apellido ? " " + user.apellido : ""}`,
       email: user.email,
+      rol: user.rol || "user",
     })
   );
 
@@ -80,9 +98,9 @@ export function logoutUser() {
   localStorage.removeItem(CURRENT_KEY);
 }
 
-// 👤 Obtener usuario actual
+// 👤 Obtener usuario actual con rol
 export function getCurrentUser():
-  | { nombre: string; email: string }
+  | { nombre: string; email: string; rol?: "admin" | "user" }
   | null {
   try {
     const raw = localStorage.getItem(CURRENT_KEY);
