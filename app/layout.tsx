@@ -25,70 +25,37 @@ export default function RootLayout({
           color: "#4E3B2B",
         }}
       >
-        {/* 🔐 Envolvemos toda la app con el proveedor de sesión */}
+        {/* Envolvemos toda la app con el proveedor de sesión */}
         <SessionProviderClient>
-          {/* 🔝 BARRA SUPERIOR */}
-          <div
-            className="topbar py-2"
-            style={{
-              backgroundColor: "#E8E1D4",
-              color: "#4E3B2B",
-              fontSize: "0.9rem",
-              borderBottom: "1px solid #D9C3B0",
-            }}
-          >
-            <div className="container d-flex flex-wrap justify-content-between align-items-center gap-3 px-md-4 px-lg-5 text-center text-md-start">
-              {/* 📞 Teléfono */}
-              <div className="d-flex align-items-center justify-content-center justify-content-md-start w-100 w-md-auto">
-                <i className="fas fa-phone me-2"></i>
-                <span>315 5445748</span>
-              </div>
+          {/* BARRA SUPERIOR */}
+          <div className="topbar">
+  <div className="topbar-inner">
+    <div className="topbar-left">
+      <i className="fas fa-phone me-2"></i>
+      <span>315 5445748</span>
+    </div>
 
-              {/* 📍 Dirección */}
-              <div className="d-flex align-items-center justify-content-center flex-grow-1">
-                <i className="fas fa-map-marker-alt me-2"></i>
-                <span style={{ fontSize: "0.9rem" }}>
-                  La Samaria, Cra 12 Sur #93-21, Torre Consultorios 312, Ibagué
-                </span>
-              </div>
+    <div className="topbar-center">
+      <i className="fas fa-map-marker-alt me-2"></i>
+      <span>
+        Carrera 5ta #11-24. Edificio Torre Empresarial. Consultorio 502. Ibagué – Tolima.
+      </span>
+    </div>
 
-              {/* 🔗 Redes sociales */}
-              <div className="d-flex align-items-center justify-content-center justify-content-md-end w-100 w-md-auto">
-                <a
-                  href="https://www.facebook.com/profile.php?id=61556167276406"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-dark me-3"
-                >
-                  <i className="fab fa-facebook-f"></i>
-                </a>
-                <a
-                  href="https://www.instagram.com/dravanessamedinao28/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-dark me-3"
-                >
-                  <i className="fab fa-instagram"></i>
-                </a>
-                <a
-                  href="https://api.whatsapp.com/message/SEJTQDVCRWGSP1?autoload=1&app_absent=0"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-dark"
-                >
-                  <i className="fab fa-whatsapp"></i>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          {/* 🩰 NAVBAR */}
+    <div className="topbar-right">
+      <a href="https://facebook.com" target="_blank"><i className="fab fa-facebook-f"></i></a>
+      <a href="https://instagram.com" target="_blank"><i className="fab fa-instagram"></i></a>
+      <a href="https://wa.me/573155445748" target="_blank"><i className="fab fa-whatsapp"></i></a>
+    </div>
+  </div>
+</div>
+          {/* NAVBAR */}
           <NavbarClient />
 
-          {/* 📄 CONTENIDO PRINCIPAL */}
+          {/* CONTENIDO PRINCIPAL */}
           <main>{children}</main>
 
-          {/* ⚓ FOOTER */}
+          {/* FOOTER */}
           <footer
             className="text-white pt-5 pb-3 mt-5"
             style={{ backgroundColor: "#4E3B2B" }}
@@ -106,8 +73,7 @@ export default function RootLayout({
                 <div className="col-md-4">
                   <h5 className="fw-bold">Contacto</h5>
                   <p>
-                    <i className="fas fa-map-marker-alt me-2"></i> Clínica
-                    Medicadiz, Torre Especialistas, Ibagué
+                    <i className="fas fa-map-marker-alt me-2"></i> Carrera 5ta #11-24. Edificio Torre Empresarial. Consultorio 502. Ibagué – Tolima.
                   </p>
                   <p>
                     <i className="fas fa-phone me-2"></i> 315 5445748

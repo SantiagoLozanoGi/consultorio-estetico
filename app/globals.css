@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* 🎨 Paleta de colores base */
+/* Paleta de colores base */
 :root {
   --background: #faf9f7;
   --foreground: #4e3b2b;
@@ -13,7 +13,7 @@
   --font-serif: "Playfair Display", serif;
 }
 
-/* 🌙 Modo oscuro opcional */
+/* Modo oscuro opcional */
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
@@ -25,13 +25,13 @@
   }
 }
 
-/* 🧱 Estilo general */
+/* Estilo general */
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans);
   scroll-behavior: smooth;
-  line-height: 1.6;
+  line-height: 1.4;
 }
 
 a {
@@ -44,13 +44,25 @@ a:hover {
   color: var(--accent-hover);
 }
 
-/* ====== HERO SECTION ====== */
+/* ===============================
+   HERO SECTION
+   =============================== */
+
+.hero-section {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100%;
+  min-height: 100vh;
+}
+
 .hero-left {
-  aspect-ratio: 4 / 5; /* relación vertical ideal para retratos */
-  max-height: 750px;
+  aspect-ratio: 4 / 5;
+  max-height: 950px;
   min-height: 500px;
   overflow: hidden;
   position: relative;
+  flex: 1 1 50%;
 }
 
 .hero-left img {
@@ -66,6 +78,7 @@ a:hover {
 }
 
 .hero-right {
+  flex: 1 1 50%;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -102,7 +115,7 @@ a:hover {
   transform: scale(1.05);
 }
 
-/* 🔄 Animación de rotación de imágenes o elementos */
+/* Animaciones de interacción */
 .rotate-ring > div {
   filter: brightness(0.85);
   transition: transform 0.4s ease, filter 0.4s ease;
@@ -113,8 +126,48 @@ a:hover {
   filter: brightness(1.1);
 }
 
-/* ====== 📱 RESPONSIVIDAD ====== */
-@media (max-width: 1200px) {
+/* ===============================
+   CONTENEDORES Y CARDS
+   =============================== */
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.shadow-soft {
+  box-shadow: 0 6px 18px rgba(176, 137, 104, 0.25);
+}
+
+.rounded-4 {
+  border-radius: 1.25rem;
+}
+
+/* ===============================
+   RESPONSIVIDAD GLOBAL
+   =============================== */
+
+/* Escritorios grandes (≥1200px) */
+@media (min-width: 1200px) {
+  .container {
+    max-width: 1320px;
+  }
+
+  .hero-right {
+    padding: 6rem 5rem;
+  }
+
+  .hero-right h1 {
+    font-size: 3rem;
+  }
+}
+
+/* Portátiles medianos (768px–1199px) */
+@media (max-width: 1199px) and (min-width: 768px) {
+  .hero-section {
+    flex-direction: row;
+  }
+
   .hero-right {
     padding: 4rem 3rem;
   }
@@ -126,11 +179,16 @@ a:hover {
   .hero-right p {
     font-size: 1rem;
   }
+
+  .navbar-brand img {
+    width: 110px;
+  }
 }
 
+/* Tablets y pantallas pequeñas (≤992px) */
 @media (max-width: 992px) {
   .hero-section {
-    flex-direction: column !important;
+    flex-direction: column;
   }
 
   .hero-left {
@@ -157,8 +215,13 @@ a:hover {
     margin: 1.2rem auto 0;
     display: inline-block;
   }
+
+  .navbar-nav {
+    text-align: center;
+  }
 }
 
+/* Tablets pequeñas (≤768px) */
 @media (max-width: 768px) {
   .hero-right {
     padding: 2.5rem 1.5rem !important;
@@ -175,9 +238,18 @@ a:hover {
   .hero-right a.btn {
     padding: 0.8rem 1.8rem;
   }
+
+  footer h5 {
+    font-size: 1rem;
+  }
+
+  footer p {
+    font-size: 0.9rem;
+  }
 }
 
-@media (max-width: 480px) {
+/* Celulares (≤576px) */
+@media (max-width: 576px) {
   .hero-right {
     padding: 2rem 1rem !important;
   }
@@ -193,56 +265,151 @@ a:hover {
   .hero-right a.btn {
     width: 100%;
   }
-}
 
-/* ====== 🪶 DETALLES ADICIONALES ====== */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.shadow-soft {
-  box-shadow: 0 6px 18px rgba(176, 137, 104, 0.25);
-}
-
-.rounded-4 {
-  border-radius: 1.25rem;
-}
-
-/* ================================================
-   📱 Estilos responsive del layout y topbar/footer
-   ================================================= */
-
-/* Tablets y pantallas medianas */
-@media (max-width: 992px) {
-  .topbar {
+  footer {
     text-align: center;
   }
+
+  footer .col-md-4 {
+    margin-bottom: 1.5rem;
+  }
+
+  footer hr {
+    margin: 1.5rem auto;
+    width: 70%;
+  }
 }
 
-/* Tablets pequeñas / pantallas medianas */
+/* ===============================
+   TOPBAR  
+   =============================== */
+
+
+.topbar {
+  background-color: #e8e1d4;
+  color: #4e3b2b;
+  font-size: 0.85rem;
+  border-bottom: 1px solid #d9c3b0;
+  height: 32px;              /* Control directo de altura */
+  display: flex;
+  align-items: center;       /* Centra verticalmente el contenido */
+}
+
+.topbar-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 60px;           /* Espaciado lateral */
+}
+
+/* Columna izquierda */
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  justify-content: flex-start;
+}
+
+/* Columna centro */
+.topbar-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 2;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Columna derecha */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  gap: 12px;
+}
+
+/* Íconos */
+.topbar i {
+  color: #b08968;
+  font-size: 0.9rem;
+}
+
+.topbar a {
+  color: #4e3b2b;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.topbar a:hover {
+  color: #b08968;
+}
+
+/* Responsivo */
+@media (max-width: 992px) {
+  .topbar-inner {
+    flex-wrap: wrap;
+    padding: 6px 20px;
+    text-align: center;
+    gap: 4px;
+  }
+
+  .topbar {
+    height: auto;
+    padding: 6px 0;
+  }
+
+  .topbar-left,
+  .topbar-center,
+  .topbar-right {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+/* ================================
+   FOOTER ESTÉTICO Y RESPONSIVO
+   ================================ */
+
+.footer {
+  background-color: #4e3b2b;
+  color: #fff;
+  padding: 3rem 0 1rem;
+  font-size: 0.95rem;
+}
+
+.footer h5 {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.footer hr {
+  border-color: #b08968;
+  opacity: 0.6;
+  margin: 1.5rem 0;
+}
+
+.footer p {
+  color: #e8e1d4;
+  margin-bottom: 0.5rem;
+}
+
 @media (max-width: 768px) {
-  .topbar span {
+  .footer {
+    text-align: center;
+  }
+
+  .footer h5 {
+    margin-top: 1rem;
+  }
+
+  .footer p {
     font-size: 0.85rem;
   }
-
-  footer h5 {
-    font-size: 1rem;
-  }
-
-  footer p {
-    font-size: 0.9rem;
-  }
 }
-
-/* Celulares */
-@media (max-width: 576px) {
-  .topbar {
-    padding: 0.6rem 1rem;
-  }
-
-  .topbar i {
-    display: none; /* Oculta íconos si hay poco espacio */
-  }
-}
-
