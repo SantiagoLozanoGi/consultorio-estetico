@@ -1,56 +1,72 @@
-// server/src/routes/citas.js
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../lib/db");
+const verifyToken = require("../middlewares/verifyToken");
+const requireRole = require("../middlewares/requireRole");
 
 /**
- * GET /citas?fecha=YYYY-MM-DD
- * - Si viene ?fecha, trae solo las de ese día
- * - Si no, trae todas (útil para el panel)
+ * =========================
+ * GET /citas
+ * =========================
  */
-router.get("/", async (req, res) => {
+router.get("/", verifyToken, async (req, res) => {
   try {
     const { fecha } = req.query;
-    let rows;
+    const { id: userId, rol } = req.user;
 
-    if (fecha) {
-      [rows] = await pool.query(
-        "SELECT * FROM citas WHERE fecha = ? ORDER BY hora",
-        [fecha]
-      );
-    } else {
-      [rows] = await pool.query(
-        "SELECT * FROM citas ORDER BY fecha DESC, hora ASC"
-      );
+    let sql = `
+      SELECT
+        id,
+        userId,
+        nombres,
+        apellidos,
+        procedimiento,
+        tipoCita,
+        fecha,
+        hora,
+        estado,
+        pagado,
+        monto,
+        fechaCreacion
+      FROM citas
+    `;
+
+    const values = [];
+
+    if (rol === "usuario") {
+      sql += " WHERE userId = ?";
+      values.push(userId);
     }
 
-    return res.json({ ok: true, citas: rows });
+    if (fecha) {
+      sql += values.length ? " AND fecha = ?" : " WHERE fecha = ?";
+      values.push(fecha);
+    }
+
+    sql += " ORDER BY fecha ASC, hora ASC";
+
+    const [rows] = await pool.query(sql, values);
+    res.json({ ok: true, citas: rows });
   } catch (err) {
-    console.error("Error GET /citas:", err);
-    return res.status(500).json({ ok: false, error: "Error al obtener citas" });
+    console.error(err);
+    res.status(500).json({ ok: false });
   }
 });
 
 /**
- * 🔥 GET /citas/usuario/:userId
- * Devuelve todas las citas asignadas a un usuario específico
+ * =========================
+ * POST /citas
+ * =========================
+ * usuario / admin / ayudante / developer
  */
-router.get("/usuario/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    if (!userId) {
-      return res.status(400).json({
-        ok: false,
-        error: "El parámetro :userId es obligatorio"
-      });
-    }
-
-    const [rows] = await pool.query(
-      `
-      SELECT
-        id,
-        userId,
+router.post(
+  "/",
+  verifyToken,
+  requireRole(["usuario", "admin", "ayudante", "developer"]),
+  async (req, res) => {
+    try {
+      const {
+        userId, // opcional: admin/ayudante pueden crear para otros
         nombres,
         apellidos,
         telefono,
@@ -60,164 +76,178 @@ router.get("/usuario/:userId", async (req, res) => {
         nota,
         fecha,
         hora,
-        metodoPago,
-        tipoPagoConsultorio,
-        tipoPagoOnline,
-        pagado,
-        monto,
-        montoPagado,
-        montoRestante,
-        creadaPor,
-        estado,
-        qrCita,
-        motivoCancelacion,
-        fechaCreacion,
-        fechaActualizacion
-      FROM citas
-      WHERE userId = ?
-      ORDER BY fechaCreacion DESC
-      `,
-      [userId]
-    );
+      } = req.body;
 
-    return res.json({ ok: true, citas: rows });
-  } catch (err) {
-    console.error("Error GET /citas/usuario/:userId:", err);
-    return res.status(500).json({
-      ok: false,
-      error: "Error al obtener citas del usuario"
-    });
+      const ownerId = userId || req.user.id;
+
+      // ⛔ Bloqueo de hora
+      const [ocupada] = await pool.query(
+        `
+        SELECT id FROM citas
+        WHERE fecha = ? AND hora = ?
+        AND estado NOT IN ('cancelada')
+        `,
+        [fecha, hora]
+      );
+
+      if (ocupada.length) {
+        return res.status(409).json({
+          ok: false,
+          error: "Hora no disponible",
+        });
+      }
+
+      const [result] = await pool.query(
+        `
+        INSERT INTO citas (
+          userId,
+          nombres,
+          apellidos,
+          telefono,
+          correo,
+          procedimiento,
+          tipoCita,
+          nota,
+          fecha,
+          hora,
+          estado,
+          pagado,
+          fechaCreacion
+        ) VALUES (
+          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+          'pendiente',
+          0,
+          NOW()
+        )
+        `,
+        [
+          ownerId,
+          nombres,
+          apellidos,
+          telefono,
+          correo,
+          procedimiento,
+          tipoCita,
+          nota ?? null,
+          fecha,
+          hora,
+        ]
+      );
+
+      res.status(201).json({ ok: true, id: result.insertId });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ ok: false });
+    }
   }
-});
+);
 
 /**
- * POST /citas
- * Crea una cita nueva
- */
-router.post("/", async (req, res) => {
-  try {
-    const {
-      userId,
-      nombres,
-      apellidos,
-      telefono,
-      correo,
-      procedimiento,
-      tipoCita,
-      nota,
-      fecha,
-      hora,
-      metodoPago,
-      tipoPagoConsultorio,
-      tipoPagoOnline,
-      pagado,
-      monto,
-      montoPagado,
-      montoRestante,
-      creadaPor,
-      estado,
-      qrCita,
-      motivoCancelacion,
-    } = req.body;
-
-    const [result] = await pool.query(
-      `INSERT INTO citas
-       (userId, nombres, apellidos, telefono, correo, procedimiento, tipoCita,
-        nota, fecha, hora, metodoPago, tipoPagoConsultorio, tipoPagoOnline,
-        pagado, monto, montoPagado, montoRestante,
-        creadaPor, estado, qrCita, motivoCancelacion)
-       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [
-        userId,
-        nombres,
-        apellidos,
-        telefono,
-        correo,
-        procedimiento,
-        tipoCita,
-        nota ?? null,
-        fecha,
-        hora,
-        metodoPago ?? null,
-        tipoPagoConsultorio ?? null,
-        tipoPagoOnline ?? null,
-        pagado ? 1 : 0,
-        monto ?? null,
-        montoPagado ?? null,
-        montoRestante ?? null,
-        creadaPor ?? "usuario",
-        estado ?? "pendiente",
-        qrCita ?? null,
-        motivoCancelacion ?? null,
-      ]
-    );
-
-    const [rows] = await pool.query("SELECT * FROM citas WHERE id = ?", [
-      result.insertId,
-    ]);
-
-    return res.status(201).json({ ok: true, cita: rows[0] });
-  } catch (err) {
-    console.error("Error POST /citas:", err);
-    return res.status(500).json({ ok: false, error: "Error al crear cita" });
-  }
-});
-
-/**
+ * =========================
  * PUT /citas/:id
- * Actualiza campos de la cita (partial update)
+ * =========================
  */
-router.put("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const fields = req.body || {};
+router.put("/:id", verifyToken, async (req, res) => {
+  const { rol, id: userId } = req.user;
+  const { id } = req.params;
 
-    if (Object.keys(fields).length === 0) {
-      return res.status(400).json({
-        ok: false,
-        error: "No se recibieron campos para actualizar.",
-      });
+  try {
+    // 👤 Usuario: solo cancelar
+    if (rol === "usuario") {
+      if (req.body.estado !== "cancelada") {
+        return res.status(403).json({ ok: false });
+      }
+
+      await pool.query(
+        `
+        UPDATE citas
+        SET estado = 'cancelada'
+        WHERE id = ? AND userId = ?
+        `,
+        [id, userId]
+      );
+
+      return res.json({ ok: true });
     }
 
+    // 🧑‍⚕️ Admin / Ayudante / Developer
+    const allowed = ["fecha", "hora", "estado", "nota"];
     const sets = [];
     const values = [];
 
-    Object.entries(fields).forEach(([key, value]) => {
-      sets.push(`${key} = ?`);
-      if (key === "pagado") {
-        values.push(value ? 1 : 0);
-      } else {
-        values.push(value);
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        sets.push(`${key} = ?`);
+        values.push(req.body[key]);
       }
-    });
+    }
+
+    if (!sets.length) {
+      return res.status(400).json({ ok: false });
+    }
 
     values.push(id);
 
-    const sql = `UPDATE citas SET ${sets.join(", ")} WHERE id = ?`;
-    await pool.query(sql, values);
+    await pool.query(
+      `UPDATE citas SET ${sets.join(", ")} WHERE id = ?`,
+      values
+    );
 
-    const [rows] = await pool.query("SELECT * FROM citas WHERE id = ?", [id]);
-
-    return res.json({ ok: true, cita: rows[0] });
+    res.json({ ok: true });
   } catch (err) {
-    console.error("Error PUT /citas/:id:", err);
-    return res.status(500).json({ ok: false, error: "Error al actualizar cita" });
+    console.error(err);
+    res.status(500).json({ ok: false });
   }
 });
 
 /**
- * DELETE /citas/:id
- * (Si prefieres cancelar en vez de borrar, cambia esto a un UPDATE estado='cancelada')
+ * =========================
+ * CONFIRMAR PAGO
+ * =========================
  */
-router.delete("/:id", async (req, res) => {
-  try {
+router.post(
+  "/:id/confirmar-pago",
+  verifyToken,
+  requireRole(["admin", "developer"]),
+  async (req, res) => {
     const { id } = req.params;
-    await pool.query("DELETE FROM citas WHERE id = ?", [id]);
-    return res.json({ ok: true });
-  } catch (err) {
-    console.error("Error DELETE /citas/:id:", err);
-    return res.status(500).json({ ok: false, error: "Error al eliminar cita" });
+    const { monto } = req.body;
+
+    if (!monto || monto <= 0) {
+      return res.status(400).json({ ok: false });
+    }
+
+    await pool.query(
+      `
+      UPDATE citas
+      SET
+        pagado = 1,
+        monto = ?,
+        estado = 'pagada',
+        fechaPago = NOW(),
+        confirmadoPor = ?
+      WHERE id = ?
+      `,
+      [monto, req.user.id, id]
+    );
+
+    res.json({ ok: true });
   }
-});
+);
+
+/**
+ * =========================
+ * DELETE /citas/:id
+ * =========================
+ */
+router.delete(
+  "/:id",
+  verifyToken,
+  requireRole(["admin", "ayudante", "developer"]),
+  async (req, res) => {
+    await pool.query("DELETE FROM citas WHERE id = ?", [req.params.id]);
+    res.json({ ok: true });
+  }
+);
 
 module.exports = router;

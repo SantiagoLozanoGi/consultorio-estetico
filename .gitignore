@@ -9,6 +9,8 @@ package-lock.json
 pnpm-lock.yaml
 *.log
 
+firebase-service-account.json
+
 # ==========================
 # Next.js (frontend)
 # ==========================
