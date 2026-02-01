@@ -9,7 +9,9 @@ package-lock.json
 pnpm-lock.yaml
 *.log
 
+server/config/*.json
 firebase-service-account.json
+server/config/consultorioesteticova-firebase-adminsdk-*.json
 
 # ==========================
 # Next.js (frontend)
