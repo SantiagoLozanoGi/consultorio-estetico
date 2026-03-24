@@ -5,24 +5,15 @@ function requireRole(allowedRoles = []) {
 
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({
-        ok: false,
-        error: "Usuario no autenticado",
-      });
+      return res.status(401).json({ ok: false, error: "Usuario no autenticado" });
     }
 
     const { rol } = req.user;
 
-    // developer = super rol
-    if (rol === "developer") {
-      return next();
-    }
+    if (rol === "developer") return next(); // super rol
 
     if (!allowedRoles.includes(rol)) {
-      return res.status(403).json({
-        ok: false,
-        error: "Acceso denegado para este rol",
-      });
+      return res.status(403).json({ ok: false, error: "Acceso denegado para este rol" });
     }
 
     next();

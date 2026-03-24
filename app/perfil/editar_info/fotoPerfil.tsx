@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { PALETTE } from "./palette";
+import { supabase } from "@/lib/supabaseClient";
+import { api } from "@/lib/api";
 
 interface Props {
   photo?: string;
@@ -10,31 +12,54 @@ interface Props {
 }
 
 export default function FotoPerfil({ photo, email, canEdit, setPhoto }: Props) {
-  const [finalPhoto, setFinalPhoto] = useState<string | undefined>(photo);
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState<string | undefined>(photo);
 
-  // Cargar la foto desde localStorage si existe
-  useEffect(() => {
-    const savedPhoto = email ? localStorage.getItem(`photo_${email}`) : null;
-    if (savedPhoto) {
-      setFinalPhoto(savedPhoto); // Usar la foto guardada en localStorage
-    } else {
-      setFinalPhoto(photo || "/default-avatar.png"); // Usar la foto predeterminada si no hay foto personalizada
-    }
-  }, [email, photo]);
+  useEffect(() => { setPreview(photo); }, [photo]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !email) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result as string;
-      setFinalPhoto(base64); // Actualiza la foto en el estado
-      if (email) localStorage.setItem(`photo_${email}`, base64); // Guarda la foto en localStorage
-      setPhoto(base64); // Llama a la función setPhoto proporcionada para actualizar el estado global si es necesario
-    };
-    reader.readAsDataURL(file);
+    // Mostrar preview inmediato
+    const localUrl = URL.createObjectURL(file);
+    setPreview(localUrl);
+    setUploading(true);
+
+    try {
+      // 1. Subir a Supabase Storage — bucket "avatares"
+      const ext = file.name.split(".").pop();
+      const path = `${email.replace("@", "_").replace(".", "_")}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("avatares")
+        .upload(path, file, { upsert: true, contentType: file.type });
+
+      if (uploadError) throw new Error(uploadError.message);
+
+      // 2. Obtener URL pública
+      const { data } = supabase.storage.from("avatares").getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+
+      // 3. Guardar URL en la tabla usuarios
+      await api.put("/usuarios/me", { photo: publicUrl });
+
+      setPhoto(publicUrl);
+      setPreview(publicUrl);
+    } catch (err: any) {
+      console.error("Error subiendo foto:", err);
+      alert("No se pudo subir la foto: " + err.message);
+      setPreview(photo); // Revertir preview
+    } finally {
+      setUploading(false);
+    }
   };
+
+  const displayPhoto =
+    preview ||
+    (email
+      ? `https://ui-avatars.com/api/?name=${encodeURIComponent(email)}&background=E6CCB2&color=7F5539`
+      : "/default-avatar.png");
 
   return (
     <motion.div
@@ -44,26 +69,29 @@ export default function FotoPerfil({ photo, email, canEdit, setPhoto }: Props) {
       transition={{ duration: 0.5 }}
     >
       <div
-        className="mx-auto mb-3"
+        className="mx-auto mb-3 position-relative"
         style={{
-          width: 140,
-          height: 140,
-          borderRadius: "50%",
-          overflow: "hidden",
+          width: 140, height: 140, borderRadius: "50%", overflow: "hidden",
           border: `4px solid ${PALETTE.main}`,
           boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
           backgroundColor: "#f8f9fa",
         }}
       >
         <img
-          src={finalPhoto}
+          src={displayPhoto}
           alt="Foto de perfil"
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
         />
+        {uploading && (
+          <div
+            style={{
+              position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}
+          >
+            <div className="spinner-border spinner-border-sm text-white" role="status" />
+          </div>
+        )}
       </div>
 
       {canEdit && (
@@ -71,12 +99,9 @@ export default function FotoPerfil({ photo, email, canEdit, setPhoto }: Props) {
           <label
             htmlFor="fileInput"
             className="btn btn-outline-secondary btn-sm"
-            style={{
-              borderColor: PALETTE.main,
-              color: PALETTE.main,
-            }}
+            style={{ borderColor: PALETTE.main, color: PALETTE.main, cursor: "pointer" }}
           >
-            Cambiar foto
+            {uploading ? "Subiendo…" : "Cambiar foto"}
           </label>
           <input
             id="fileInput"
@@ -84,6 +109,7 @@ export default function FotoPerfil({ photo, email, canEdit, setPhoto }: Props) {
             accept="image/*"
             style={{ display: "none" }}
             onChange={handleFileChange}
+            disabled={uploading}
           />
         </>
       )}

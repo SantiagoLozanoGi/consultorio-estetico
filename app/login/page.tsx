@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import FondoAnim from "@/components/FondoAnim";
+import FondoAnim from "../src/components/FondoAnim";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import LoginForm from "./LoginForm";
 import { PALETTE } from "./palette2";

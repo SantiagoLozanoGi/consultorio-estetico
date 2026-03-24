@@ -1,76 +1,106 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { PALETTE } from "./palette";
-import { createUser, type User } from "../utils/localDB";
-import type { RegisterFormData } from "./page";
+import { supabase } from "@/lib/supabaseClient";
+import { api } from "@/lib/api";
 
 interface Props {
-  formData: RegisterFormData;
+  formData: any;
 }
-
-// helper para calcular edad a partir de la fecha
-const calcularEdad = (date: Date | null): number => {
-  if (!date) return 0;
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - date.getFullYear();
-  const mes = hoy.getMonth() - date.getMonth();
-  if (mes < 0 || (mes === 0 && hoy.getDate() < date.getDate())) {
-    edad--;
-  }
-  return edad;
-};
 
 export default function Step3Exito({ formData }: Props) {
   const router = useRouter();
+  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Guardar el usuario en localDB al montar el componente
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    async function crearCuenta() {
+      try {
+        // 1. Crear cuenta en Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email.trim(),
+          password: formData.password,
+          options: {
+            data: {
+              full_name: `${formData.nombres.trim()} ${formData.apellidos.trim()}`,
+              nombres: formData.nombres.trim(),
+              apellidos: formData.apellidos.trim(),
+            },
+          },
+        });
 
-    try {
-      const antecedentesTxt = (formData.antecedentes || []).join(", ");
-      const alergiasTxt = (formData.alergias || []).join(", ");
-      const medicamentosTxt = (formData.medicamentos || []).join(", ");
+        if (error) throw new Error(error.message);
+        if (!data.session && !data.user) {
+          // Supabase envió email de confirmación (si está activado)
+          setStatus("ok");
+          return;
+        }
 
-      const edadNumber =
-        formData.fechaNacimiento != null
-          ? calcularEdad(formData.fechaNacimiento)
-          : Number(formData.edad) || 0;
+        // 2. Sincronizar con la tabla usuarios del backend
+        // Si hay sesión directamente (email confirmation desactivado)
+        if (data.session?.access_token) {
+          await api.post("/auth/callback", {
+            access_token: data.session.access_token,
+          });
 
-      // mapear sexo a tipo User["genero"]
-      const generoMapped: User["genero"] =
-        formData.sexo === "Masculino" || formData.sexo === "Femenino"
-          ? formData.sexo
-          : "Otro";
+          // 3. Actualizar datos médicos en la tabla usuarios
+          await api.put("/usuarios/me", {
+            telefono: formData.telefono?.trim() || "",
+            edad: Number(formData.edad) || 0,
+            genero: formData.genero || "Otro",
+            antecedentes:
+              formData.antecedentes?.map((a: any) => a.value).join(", ") || "",
+            antecedentesDescripcion: formData.antecedentesDescripcion || "",
+            alergias:
+              formData.alergias?.map((a: any) => a.value).join(", ") || "",
+            alergiasDescripcion: formData.alergiasDescripcion || "",
+            medicamentos:
+              formData.medicamentos?.map((a: any) => a.value).join(", ") || "",
+            medicamentosDescripcion: formData.medicamentosDescripcion || "",
+          });
+        }
 
-      createUser({
-        nombres: formData.nombres.trim(),
-        apellidos: formData.apellidos.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        telefono: formData.telefono?.trim() || "",
-        edad: edadNumber,
-        genero: generoMapped,
-        antecedentes: antecedentesTxt,
-        antecedentesDescripcion:
-          formData.antecedentesDescripcion || "",
-        alergias: alergiasTxt,
-        alergiasDescripcion: formData.alergiasDescripcion || "",
-        medicamentos: medicamentosTxt,
-        medicamentosDescripcion:
-          formData.medicamentosDescripcion || "",
-        // photo se genera con avatar por defecto en localDB
-      });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.warn("Error creando usuario:", e);
+        setStatus("ok");
+      } catch (err: any) {
+        console.error("Error creando cuenta:", err);
+        setErrorMsg(err.message || "Error desconocido al crear la cuenta.");
+        setStatus("error");
+      }
     }
-    // solo al montar
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    crearCuenta();
+  }, []); // Solo al montar
+
+  if (status === "loading") {
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border" style={{ color: PALETTE.main }} role="status" />
+        <p className="mt-3" style={{ color: PALETTE.muted }}>
+          Creando tu cuenta…
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <div className="text-center py-5">
+        <p style={{ color: "#b02e2e" }}>
+          ❌ {errorMsg || "No se pudo crear la cuenta. Intenta de nuevo."}
+        </p>
+        <button
+          onClick={() => router.push("/register")}
+          className="btn mt-3"
+          style={{ backgroundColor: PALETTE.main, color: "#fff", borderRadius: "50px" }}
+        >
+          Volver al registro
+        </button>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -81,12 +111,7 @@ export default function Step3Exito({ formData }: Props) {
     >
       <div
         className="mx-auto rounded-circle d-flex align-items-center justify-content-center mb-4"
-        style={{
-          width: 100,
-          height: 100,
-          backgroundColor: "#E1D4C6",
-          color: PALETTE.text,
-        }}
+        style={{ width: 100, height: 100, backgroundColor: "#E1D4C6", color: PALETTE.text }}
       >
         <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
           <motion.path
@@ -110,20 +135,15 @@ export default function Step3Exito({ formData }: Props) {
       </h2>
 
       <p style={{ color: PALETTE.muted, maxWidth: 400, margin: "0 auto" }}>
-        Puedes iniciar sesión para agendar tus citas o modificar tu información
-        médica desde tu perfil.
+        Revisa tu correo para confirmar tu cuenta (si recibiste un email).
+        Luego podrás iniciar sesión para agendar tus citas.
       </p>
 
       <div className="mt-4">
         <button
           onClick={() => router.push("/login")}
           className="btn w-100 fw-semibold py-2"
-          style={{
-            backgroundColor: PALETTE.main,
-            border: "none",
-            color: "white",
-            borderRadius: "50px",
-          }}
+          style={{ backgroundColor: PALETTE.main, border: "none", color: "white", borderRadius: "50px" }}
         >
           Ir al inicio de sesión
         </button>

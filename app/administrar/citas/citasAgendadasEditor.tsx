@@ -1,192 +1,106 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Cita, updateCitaAPI } from "./helpers"; // 🔹 ahora desde helpers (BD real)
-import { PALETTE } from "../../agendar/page";
+import { api } from "@/lib/api";
+
+interface Cita {
+  id: number; procedimiento: string; fecha: string;
+  hora: string; estado: string; nota?: string;
+}
 
 interface Props {
   cita: Cita;
   onClose: () => void;
 }
 
-export default function CitasAgendadasEditor({
-  cita: citaInicial,
-  onClose,
-}: Props) {
-  const [cita, setCita] = useState<Cita>({ ...citaInicial });
-  const [guardado, setGuardado] = useState<boolean>(false);
+export default function CitasAgendadasEditor({ cita: citaInicial, onClose }: Props) {
+  const [form, setForm] = useState({ ...citaInicial });
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ): void => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setCita((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = async (): Promise<void> => {
+  const handleSave = async () => {
+    setSaving(true); setError(null);
     try {
-      // 🔹 Solo mandamos los campos que realmente se editan aquí
-      const payload: Partial<Cita> = {
-        procedimiento: cita.procedimiento,
-        fecha: cita.fecha.slice(0, 10),
-        hora: cita.hora,
-        nota: cita.nota ?? null,
-        metodoPago: cita.metodoPago ?? null,
-        estado: cita.estado,
-      };
-
-      await updateCitaAPI(cita.id, payload);
-      setGuardado(true);
-
-      setTimeout(() => {
-        setGuardado(false);
-        onClose();
-      }, 1800);
-    } catch (error) {
-      console.error("Error actualizando cita:", error);
+      await api.put(`/citas/${citaInicial.id}`, {
+        fecha: form.fecha,
+        hora: form.hora,
+        estado: form.estado,
+        nota: form.nota,
+      });
+      setSaved(true);
+      setTimeout(() => onClose(), 1500);
+    } catch (e: any) {
+      setError(e.message || "Error al guardar");
+    } finally {
+      setSaving(false);
     }
   };
+
+  const ESTADOS = ["pendiente", "confirmada", "atendida", "cancelada"];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 40 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-2xl mx-auto border border-[#E5D8C8]"
+      className="bg-white p-6 rounded-4 shadow-lg w-100 border"
+      style={{ borderColor: "#E5D8C8", maxWidth: 560 }}
     >
-      <h2
-        className="text-2xl font-semibold text-center mb-6"
-        style={{ color: PALETTE.main }}
-      >
+      <h2 className="fw-bold text-center mb-4" style={{ color: "#7A5534" }}>
         Reagendar / Editar Cita
       </h2>
 
-      {/* === FORM === */}
-      <form className="flex flex-col gap-5" onSubmit={(e) => e.preventDefault()}>
-        <div>
-          <label className="block text-sm font-medium text-[#6E5A49] mb-1">
-            Procedimiento
-          </label>
-          <input
-            name="procedimiento"
-            value={cita.procedimiento}
-            onChange={handleChange}
-            className="w-full p-3 border border-[#E5D8C8] rounded-lg bg-[#FFFDF9] focus:ring-2 focus:ring-[#B08968]"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-sm font-medium text-[#6E5A49] mb-1">
-              Fecha
-            </label>
-            <input
-              type="date"
-              name="fecha"
-              value={cita.fecha.slice(0, 10)}
-              onChange={handleChange}
-              className="w-full p-3 border border-[#E5D8C8] rounded-lg bg-[#FFFDF9] focus:ring-2 focus:ring-[#B08968]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#6E5A49] mb-1">
-              Hora
-            </label>
-            <input
-              name="hora"
-              value={cita.hora}
-              onChange={handleChange}
-              className="w-full p-3 border border-[#E5D8C8] rounded-lg bg-[#FFFDF9] focus:ring-2 focus:ring-[#B08968]"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-[#6E5A49] mb-1">
-            Nota o comentario (opcional)
-          </label>
-          <textarea
-            name="nota"
-            value={cita.nota ?? ""}
-            onChange={handleChange}
-            rows={4}
-            className="w-full p-3 border border-[#E5D8C8] rounded-lg bg-[#FFFDF9] focus:ring-2 focus:ring-[#B08968]"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-sm font-medium text-[#6E5A49] mb-1">
-              Método de pago
-            </label>
-            <select
-              name="metodoPago"
-              value={cita.metodoPago ?? ""}
-              onChange={handleChange}
-              className="w-full p-3 border border-[#E5D8C8] rounded-lg bg-[#FFFDF9] focus:ring-2 focus:ring-[#B08968]"
-            >
-              <option value="">Seleccionar</option>
-              <option value="Consultorio">Consultorio</option>
-              <option value="Online">Online</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-[#6E5A49] mb-1">
-              Estado de la cita
-            </label>
-            <select
-              name="estado"
-              value={cita.estado}
-              onChange={handleChange}
-              className="w-full p-3 border border-[#E5D8C8] rounded-lg bg-[#FFFDF9] focus:ring-2 focus:ring-[#B08968]"
-            >
-              <option value="pendiente">Pendiente</option>
-              <option value="confirmada">Confirmada</option>
-              <option value="atendida">Atendida</option>
-              <option value="cancelada">Cancelada</option>
-            </select>
-          </div>
-        </div>
-
-        {/* === BOTONES === */}
-        <div className="flex justify-center mt-6 gap-4">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.97 }}
-            type="button"
-            onClick={handleSave}
-            className="px-8 py-3 rounded-full bg-gradient-to-r from-[#B08968] to-[#D1A97A] text-white font-semibold shadow-md hover:shadow-lg transition"
-          >
-            Guardar cambios
-          </motion.button>
-
-          <button
-            onClick={onClose}
-            type="button"
-            className="px-6 py-3 rounded-md bg-gray-200 text-[#4E3B2B] hover:bg-gray-300 transition font-medium"
-          >
-            Volver
-          </button>
-        </div>
-      </form>
-
-      {guardado && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mt-6 text-center text-green-700 font-medium"
-        >
-          Cita actualizada correctamente
-        </motion.div>
+      {error && (
+        <div className="alert alert-danger py-2 px-3 mb-3" style={{ fontSize: "0.88rem" }}>{error}</div>
       )}
+      {saved && (
+        <div className="alert alert-success py-2 px-3 mb-3" style={{ fontSize: "0.88rem" }}>
+          ✅ Cambios guardados
+        </div>
+      )}
+
+      <div className="d-flex flex-column gap-3">
+        <div>
+          <label className="form-label small fw-semibold" style={{ color: "#6E5A49" }}>Procedimiento</label>
+          <input name="procedimiento" className="form-control" value={form.procedimiento} onChange={handleChange} style={{ borderColor: "#E5D8C8", backgroundColor: "#FFFDF9" }} />
+        </div>
+        <div className="d-flex gap-3">
+          <div className="flex-1">
+            <label className="form-label small fw-semibold" style={{ color: "#6E5A49" }}>Fecha</label>
+            <input type="date" name="fecha" className="form-control" value={form.fecha?.slice(0, 10)} onChange={handleChange} style={{ borderColor: "#E5D8C8", backgroundColor: "#FFFDF9" }} />
+          </div>
+          <div className="flex-1">
+            <label className="form-label small fw-semibold" style={{ color: "#6E5A49" }}>Hora</label>
+            <input name="hora" className="form-control" placeholder="ej: 10:00 AM" value={form.hora} onChange={handleChange} style={{ borderColor: "#E5D8C8", backgroundColor: "#FFFDF9" }} />
+          </div>
+        </div>
+        <div>
+          <label className="form-label small fw-semibold" style={{ color: "#6E5A49" }}>Estado</label>
+          <select name="estado" className="form-select" value={form.estado} onChange={handleChange} style={{ borderColor: "#E5D8C8", backgroundColor: "#FFFDF9" }}>
+            {ESTADOS.map((e) => <option key={e} value={e}>{e}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className="form-label small fw-semibold" style={{ color: "#6E5A49" }}>Nota</label>
+          <textarea name="nota" className="form-control" rows={3} value={form.nota || ""} onChange={handleChange} style={{ borderColor: "#E5D8C8", backgroundColor: "#FFFDF9" }} />
+        </div>
+      </div>
+
+      <div className="d-flex gap-3 mt-4">
+        <button onClick={handleSave} disabled={saving || saved} className="btn rounded-pill fw-semibold flex-1" style={{ backgroundColor: "#8B6A4B", color: "#fff", border: "none" }}>
+          {saving ? "Guardando…" : "Guardar cambios"}
+        </button>
+        <button onClick={onClose} className="btn rounded-pill fw-semibold" style={{ backgroundColor: "#E9DED2", color: "#4E3B2B", border: "none" }}>
+          Cancelar
+        </button>
+      </div>
     </motion.div>
   );
 }

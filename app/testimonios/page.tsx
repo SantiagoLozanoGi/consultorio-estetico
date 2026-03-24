@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import FondoAnim from "@/components/FondoAnim";
-import ComentariosClientes from "@/components/ComentariosClientes";
+import FondoAnim from "../src/components/FondoAnim";
+import ComentariosClientes from "../src/components/ComentariosClientes";
 
 // ✅ Tipos de dominio (BD real)
 import type { Testimonio } from "../types/domain";

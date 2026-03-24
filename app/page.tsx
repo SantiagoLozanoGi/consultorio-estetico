@@ -3,10 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import Galeria3D from "@/components/Galeria3D";
+import Galeria3D from "./src/components/Galeria3D";
 import dynamic from "next/dynamic";
 
-const VideoAnim = dynamic(() => import("@/components/VideoAnim"), {
+const VideoAnim = dynamic(() => import("./src/components/VideoAnim"), {
   ssr: false,
 });
 

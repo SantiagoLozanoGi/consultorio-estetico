@@ -1,46 +1,47 @@
-import admin from "../lib/firebaseAdmin.js";
-import { pool } from "../lib/db.js";
+const supabase = require("../lib/supabaseAdmin");
+const { pool } = require("../lib/db");
 
-export async function verifyToken(req, res, next) {
+async function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!authHeader?.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Token no proporcionado" });
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
-    // Verificar token Firebase
-    const decoded = await admin.auth().verifyIdToken(token);
+    // Verificar token con Supabase Auth
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
 
-    if (!decoded.email) {
+    if (error || !user) {
+      return res.status(401).json({ message: "Token inválido" });
+    }
+
+    if (!user.email) {
       return res.status(401).json({ message: "Token sin email válido" });
     }
 
-    // Buscar usuario en TU base de datos
-    const [rows] = await pool.query(
-      `
-      SELECT id, email, rol
-      FROM usuarios
-      WHERE email = ?
-      LIMIT 1
-      `,
-      [decoded.email]
+    // Buscar usuario en tu tabla usuarios
+    const { rows } = await pool.query(
+      `SELECT id, email, rol FROM usuarios WHERE email = $1 LIMIT 1`,
+      [user.email]
     );
 
     if (!rows.length) {
-      return res.status(403).json({
-        message: "Usuario no registrado en el sistema",
-      });
+      return res
+        .status(403)
+        .json({ message: "Usuario no registrado en el sistema" });
     }
 
-    // Inyectar usuario completo y confiable
     req.user = {
       id: rows[0].id,
       email: rows[0].email,
       rol: rows[0].rol,
-      firebaseUid: decoded.uid,
+      supabaseUid: user.id,
     };
 
     next();
@@ -49,3 +50,5 @@ export async function verifyToken(req, res, next) {
     return res.status(401).json({ message: "Token inválido" });
   }
 }
+
+module.exports = verifyToken;

@@ -1,20 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Cita, updateCitaAPI, formatCurrency } from "./helpers"; // 🔹 ahora todo desde helpers
-import { generarFacturaPDF } from "../ingresos/facturaPDF";
-import {
-  ArrowLeft,
-  Calculator,
-  FileDown,
-  CheckCircle2,
-  XCircle,
-} from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, CheckCircle2, XCircle, Calculator, FileDown } from "lucide-react";
+import { api } from "@/lib/api";
 import CitasAgendadasEditor from "./citasAgendadasEditor";
 
-// ✅ Tipo para el modo de pago (coincide con el estado)
-type ModoPago = "Efectivo" | "Tarjeta";
+interface Cita {
+  id: number; nombres: string; apellidos: string;
+  telefono: string; correo: string; procedimiento: string;
+  tipoCita: string; fecha: string; hora: string;
+  estado: string; pagado: boolean;
+  monto?: number; montoPagado?: number; metodoPago?: string; nota?: string;
+}
 
 interface Props {
   cita: Cita;
@@ -22,334 +20,205 @@ interface Props {
   onUpdated: () => void;
 }
 
-export default function CitasAgendadasModal({
-  cita,
-  onClose,
-  onUpdated,
-}: Props) {
-  // === Estado de pago ===
-  const [monto, setMonto] = useState<number>(cita.monto ?? 0);
-  const previoPagado = cita.montoPagado ?? 0;
-  const [pagoAhora, setPagoAhora] = useState<number>(0);
-  const [modoPago, setModoPago] = useState<ModoPago | null>(
-    (cita.tipoPagoConsultorio as ModoPago | null) ?? null
-  );
+export default function CitasAgendadasModal({ cita, onClose, onUpdated }: Props) {
+  const [monto, setMonto] = useState<number>(cita.monto || 0);
+  const [pagoAhora, setPagoAhora] = useState(0);
+  const [modoPago, setModoPago] = useState<"Efectivo" | "Tarjeta" | null>(null);
+  const [concluida, setConcluida] = useState(cita.estado === "atendida");
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Cálculos dinámicos
+  const previoPagado = cita.montoPagado || 0;
   const pagadoAcumulado = Math.max(previoPagado + pagoAhora, 0);
   const restante = Math.max(monto - pagadoAcumulado, 0);
-  const totalDevolver = pagadoAcumulado > monto ? pagadoAcumulado - monto : 0;
-  const porcentajePago =
-    monto > 0 ? Math.min((pagadoAcumulado / monto) * 100, 100) : 0;
+  const porcentaje = monto > 0 ? Math.min((pagadoAcumulado / monto) * 100, 100) : 0;
 
-  // Estados de control
-  const [concluida, setConcluida] = useState<boolean>(
-    cita.estado === "atendida"
-  );
-  const [esCancelada] = useState<boolean>(cita.estado === "cancelada");
-  const [motivoCancelacion] = useState<string>(cita.motivoCancelacion ?? "");
-  const [modoEdicion, setModoEdicion] = useState<boolean>(false);
-  const [autoCierre, setAutoCierre] = useState<boolean>(false);
+  /* ── Confirmar cita ──────────────────────────────────────────────────── */
+  const handleConfirmar = async () => {
+    setSaving(true); setError(null);
+    try {
+      await api.put(`/citas/${cita.id}`, { estado: "confirmada" });
+      onUpdated();
+    } catch (e: any) { setError(e.message); }
+    finally { setSaving(false); }
+  };
 
-  // === Acciones ===
-  const handleConcluir = async (): Promise<void> => {
+  /* ── Marcar atendida + confirmar pago ───────────────────────────────── */
+  const handleConcluir = async () => {
     if (cita.estado !== "confirmada") {
-      window.alert("Solo puedes concluir citas que ya estén confirmadas.");
-      return;
+      setError("Solo puedes concluir citas confirmadas."); return;
     }
-
-    if (!modoPago) {
-      window.alert("Selecciona un método de pago antes de concluir la cita.");
-      return;
-    }
-
-    const payload: Partial<Cita> = {
-      estado: "atendida",
-      metodoPago: "Consultorio",
-      tipoPagoConsultorio: modoPago,
-      monto,
-      montoPagado: pagadoAcumulado,
-      pagado: pagadoAcumulado >= monto ? 1 : 0,
-    };
-
+    if (!monto || monto <= 0) { setError("Ingresa el monto de la cita."); return; }
+    setSaving(true); setError(null);
     try {
-      await updateCitaAPI(cita.id, payload);
+      // 1. Marcar como atendida
+      await api.put(`/citas/${cita.id}`, { estado: "atendida" });
+      // 2. Confirmar pago
+      await api.post(`/citas/${cita.id}/confirmar-pago`, { monto: pagadoAcumulado });
       setConcluida(true);
-      setAutoCierre(true);
-
-      setTimeout(() => {
-        onUpdated();
-        onClose();
-      }, 1500);
-    } catch (error) {
-      console.error("Error al concluir cita:", error);
-    }
+      setTimeout(() => onUpdated(), 1200);
+    } catch (e: any) { setError(e.message); }
+    finally { setSaving(false); }
   };
 
-  const getColorBarra = (): string => {
-    if (porcentajePago < 50) return "#E57373";
-    if (porcentajePago < 100) return "#E6C676";
-    return "#78B66D";
-  };
-
-  const handleDescargarFactura = (): void => {
+  /* ── Cancelar cita ───────────────────────────────────────────────────── */
+  const handleCancelar = async () => {
+    if (!confirm("¿Cancelar esta cita?")) return;
+    setSaving(true); setError(null);
     try {
-      generarFacturaPDF({
-        ...cita,
-        monto,
-        montoPagado: pagadoAcumulado,
-        montoRestante: restante,
-      });
-    } catch (error) {
-      console.error("Error generando factura PDF:", error);
-    }
+      await api.put(`/citas/${cita.id}`, { estado: "cancelada" });
+      onUpdated();
+    } catch (e: any) { setError(e.message); }
+    finally { setSaving(false); }
+  };
+
+  if (modoEdicion) {
+    return (
+      <CitasAgendadasEditor
+        cita={cita}
+        onClose={() => { setModoEdicion(false); onUpdated(); }}
+      />
+    );
+  }
+
+  const estadoColor: Record<string, string> = {
+    pendiente: "#B08968", confirmada: "#2D6A4F",
+    atendida: "#1B4F72", cancelada: "#922B21",
   };
 
   return (
     <motion.div
-      className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-[9999]"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="position-fixed inset-0 d-flex align-items-center justify-content-center"
+      style={{ zIndex: 200, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(3px)", padding: "1rem" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        className="bg-[#FBF7F2] p-6 rounded-2xl shadow-2xl w-[95%] max-w-2xl border border-[#E5D8C8] overflow-y-auto max-h-[90vh]"
+        initial={{ scale: 0.92, y: 30 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.92, y: 30 }}
+        className="bg-white rounded-4 shadow-lg p-5 w-100"
+        style={{ maxWidth: 580, maxHeight: "90vh", overflowY: "auto" }}
       >
-        {/* HEADER */}
-        <div className="flex items-center gap-3 mb-3">
-          <button
-            type="button"
-            onClick={() =>
-              modoEdicion ? setModoEdicion(false) : onClose()
-            }
-            className="p-2 rounded-full hover:bg-[#F1E6DA] transition"
-          >
-            <ArrowLeft size={20} className="text-[#6E5A49]" />
+        {/* Cabecera */}
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <button onClick={onClose} className="btn btn-sm" style={{ backgroundColor: "#E9DED2", borderRadius: "50%", width: 34, height: 34, padding: 0 }}>
+            <ArrowLeft size={16} />
           </button>
-          <h3 className="text-xl font-semibold text-[#8B6A4B] tracking-wide">
-            {modoEdicion
-              ? `Reagendar cita #${cita.id}`
-              : `Detalle de cita #${cita.id}`}
-          </h3>
+          <h4 className="fw-bold m-0" style={{ color: "#4E3B2B" }}>Detalle de cita</h4>
+          <span
+            className="badge rounded-pill px-3 py-2 text-capitalize fw-semibold"
+            style={{ backgroundColor: estadoColor[cita.estado] || "#aaa", color: "#fff" }}
+          >
+            {cita.estado}
+          </span>
         </div>
 
-        <AnimatePresence mode="wait">
-          {modoEdicion ? (
-            <CitasAgendadasEditor
-              key="editor"
-              cita={cita}
-              onClose={() => {
-                setModoEdicion(false);
-                onUpdated();
-              }}
-            />
-          ) : (
-            <motion.div
-              key="detalle"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.25 }}
-            >
-              {/* DATOS PRINCIPALES */}
-              <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5D8C8] mb-4">
-                <p className="text-sm text-[#4E3B2B] mb-1">
-                  <strong>Paciente:</strong> {cita.nombres} {cita.apellidos}
-                </p>
-                <p className="text-sm text-[#4E3B2B] mb-1">
-                  <strong>Fecha:</strong> {cita.fecha}
-                </p>
-                <p className="text-sm text-[#4E3B2B] mb-1">
-                  <strong>Hora:</strong> {cita.hora}
-                </p>
-                <p className="text-sm text-[#4E3B2B] mb-1">
-                  <strong>Procedimiento:</strong> {cita.procedimiento}
-                </p>
-                <p className="text-sm text-[#4E3B2B] mb-1">
-                  <strong>Estado actual:</strong>{" "}
-                  <span className="capitalize">{cita.estado}</span>
-                </p>
-                {cita.nota && (
-                  <p className="text-sm text-[#4E3B2B] mt-2">
-                    <strong>Nota:</strong> {cita.nota}
-                  </p>
-                )}
-                {esCancelada && motivoCancelacion && (
-                  <p className="text-sm text-red-700 mt-2">
-                    <strong>Motivo cancelación:</strong> {motivoCancelacion}
-                  </p>
-                )}
+        {error && (
+          <div className="alert alert-danger py-2 px-3 mb-3" style={{ fontSize: "0.88rem" }}>{error}</div>
+        )}
+
+        {/* Info paciente */}
+        <div className="rounded-3 p-3 mb-4" style={{ backgroundColor: "#F5EEE6" }}>
+          <p className="mb-1 fw-semibold" style={{ color: "#4E3B2B" }}>{cita.nombres} {cita.apellidos}</p>
+          <p className="mb-1 small" style={{ color: "#6C584C" }}>📧 {cita.correo}</p>
+          <p className="mb-1 small" style={{ color: "#6C584C" }}>📱 {cita.telefono}</p>
+          <p className="mb-0 small" style={{ color: "#6C584C" }}>🗓 {cita.fecha} — ⏰ {cita.hora}</p>
+        </div>
+
+        {/* Procedimiento */}
+        <div className="rounded-3 p-3 mb-4" style={{ backgroundColor: "#EEF7EE" }}>
+          <p className="mb-1 fw-semibold" style={{ color: "#2D6A4F" }}>{cita.procedimiento}</p>
+          {cita.nota && <p className="mb-0 small" style={{ color: "#4A7A5A" }}>Nota: {cita.nota}</p>}
+        </div>
+
+        {/* Pago (solo si no está cancelada) */}
+        {cita.estado !== "cancelada" && (
+          <div className="mb-4">
+            <h5 className="fw-semibold mb-3" style={{ color: "#4E3B2B" }}>
+              <Calculator size={16} className="me-1" /> Registro de pago
+            </h5>
+            <div className="d-flex gap-3 mb-3 flex-wrap">
+              <div className="flex-1">
+                <label className="form-label small fw-semibold" style={{ color: "#6C584C" }}>Monto total (COP)</label>
+                <input
+                  type="number" className="form-control"
+                  value={monto} onChange={(e) => setMonto(Number(e.target.value))}
+                  style={{ borderColor: "#E9DED2" }}
+                />
               </div>
-
-              {/* PAGOS */}
-              {!esCancelada && (
-                <div className="bg-white rounded-xl p-4 shadow-sm border border-[#E5D8C8] mb-4">
-                  <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-sm font-semibold text-[#6E5A49] flex items-center gap-2">
-                      <Calculator size={16} /> Detalle de pago
-                    </h4>
-                    <span className="text-xs text-[#8B6A4B]">
-                      {porcentajePago.toFixed(0)}% pagado
-                    </span>
-                  </div>
-
-                  {/* Barra de progreso */}
-                  <div className="w-full h-3 rounded-full bg-[#F1E6DA] overflow-hidden mb-3">
-                    <div
-                      className="h-full rounded-full transition-all"
-                      style={{
-                        width: `${porcentajePago}%`,
-                        backgroundColor: getColorBarra(),
-                      }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-[#4E3B2B] mb-4">
-                    <div>
-                      <p className="font-semibold">Valor total</p>
-                      <p>{formatCurrency(monto)}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold">Pagado (acumulado)</p>
-                      <p>{formatCurrency(pagadoAcumulado)}</p>
-                    </div>
-                    <div>
-                      <p className="font-semibold">Restante</p>
-                      <p>{formatCurrency(restante)}</p>
-                    </div>
-                  </div>
-
-                  {!concluida && (
-                    <div className="mt-4 space-y-4">
-                      {/* Monto total */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-medium text-[#4E3B2B]">
-                            Monto total del procedimiento
-                          </label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={monto}
-                            onChange={(e) =>
-                              setMonto(Number(e.target.value) || 0)
-                            }
-                            className="w-full mt-1 px-3 py-2 rounded-lg border border-[#E5D8C8] bg-[#FFFDF9] text-sm focus:outline-none focus:ring-2 focus:ring-[#B08968]"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-medium text-[#4E3B2B]">
-                            Pago en esta visita
-                          </label>
-                          <input
-                            type="number"
-                            min={0}
-                            value={pagoAhora}
-                            onChange={(e) =>
-                              setPagoAhora(Number(e.target.value) || 0)
-                            }
-                            className="w-full mt-1 px-3 py-2 rounded-lg border border-[#E5D8C8] bg-[#FFFDF9] text-sm focus:outline-none focus:ring-2 focus:ring-[#B08968]"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Modo de pago */}
-                      <div>
-                        <label className="text-sm font-medium text-[#4E3B2B]">
-                          Método de pago:
-                        </label>
-                        <div className="flex gap-3 mt-2">
-                          {(["Efectivo", "Tarjeta"] as ModoPago[]).map((m) => (
-                            <motion.button
-                              key={m}
-                              type="button"
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setModoPago(m)}
-                              className={`flex-1 py-2 rounded-lg border text-sm font-medium transition-all ${
-                                modoPago === m
-                                  ? "bg-[#B08968] text-white border-[#B08968]"
-                                  : "bg-[#FFFDF9] text-[#4B3726] border-[#E9DED2] hover:shadow-md"
-                              }`}
-                            >
-                              {m}
-                            </motion.button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Si hay devolución */}
-                      {totalDevolver > 0 && (
-                        <p className="text-xs text-[#7E1F1F] mt-1">
-                          Debes devolver al paciente:{" "}
-                          <strong>{formatCurrency(totalDevolver)}</strong>
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* BOTONES PRINCIPALES */}
-              <div className="flex flex-wrap justify-between gap-3 mt-4">
-                <div className="flex gap-3">
-                  {!esCancelada && (
-                    <button
-                      type="button"
-                      onClick={() => setModoEdicion(true)}
-                      className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#E5D8C8] text-sm text-[#4E3B2B] bg-white hover:bg-[#F1E6DA] transition"
-                    >
-                      <Calculator size={16} />
-                      Editar / Reagendar
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={handleDescargarFactura}
-                    className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[#B08968] text-sm text-[#B08968] bg-white hover:bg-[#F6EBE0] transition"
-                  >
-                    <FileDown size={16} />
-                    Descargar factura
-                  </button>
-                </div>
-
-                {!esCancelada && !concluida && (
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.96 }}
-                    onClick={handleConcluir}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-[#78B66D] to-[#4E8C4A] text-white text-sm font-semibold shadow-md hover:shadow-lg transition"
-                  >
-                    <CheckCircle2 size={18} />
-                    Concluir cita
-                  </motion.button>
-                )}
-
-                {concluida && (
-                  <div className="flex items-center gap-2 text-sm text-[#2E7D32]">
-                    <CheckCircle2 size={18} />
-                    Cita marcada como atendida
-                    {autoCierre && (
-                      <span className="text-xs text-[#6E5A49] ml-1">
-                        (cerrando...)
-                      </span>
-                    )}
-                  </div>
-                )}
-
-                {esCancelada && (
-                  <div className="flex items-center gap-2 text-sm text-[#C2185B]">
-                    <XCircle size={18} />
-                    Esta cita está cancelada
-                  </div>
-                )}
+              <div className="flex-1">
+                <label className="form-label small fw-semibold" style={{ color: "#6C584C" }}>Pago ahora (COP)</label>
+                <input
+                  type="number" className="form-control"
+                  value={pagoAhora} onChange={(e) => setPagoAhora(Number(e.target.value))}
+                  style={{ borderColor: "#E9DED2" }}
+                />
               </div>
-            </motion.div>
+            </div>
+
+            {/* Método de pago */}
+            <div className="d-flex gap-2 mb-3">
+              {(["Efectivo", "Tarjeta"] as const).map((m) => (
+                <button
+                  key={m} onClick={() => setModoPago(m)}
+                  className="btn btn-sm rounded-pill flex-1"
+                  style={{
+                    backgroundColor: modoPago === m ? "#8B6A4B" : "#F5EEE6",
+                    color: modoPago === m ? "#fff" : "#4E3B2B", border: "none",
+                  }}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+
+            {/* Barra de pago */}
+            {monto > 0 && (
+              <div>
+                <div className="d-flex justify-content-between small mb-1" style={{ color: "#6C584C" }}>
+                  <span>Pagado: ${pagadoAcumulado.toLocaleString("es-CO")}</span>
+                  <span>Restante: ${restante.toLocaleString("es-CO")}</span>
+                </div>
+                <div className="rounded-pill overflow-hidden" style={{ height: 8, backgroundColor: "#E9DED2" }}>
+                  <div style={{ width: `${porcentaje}%`, height: "100%", backgroundColor: "#8B6A4B", transition: "width 0.4s" }} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Acciones */}
+        <div className="d-flex gap-2 flex-wrap">
+          {cita.estado === "pendiente" && (
+            <button onClick={handleConfirmar} disabled={saving} className="btn rounded-pill fw-semibold flex-1" style={{ backgroundColor: "#2D6A4F", color: "#fff", border: "none" }}>
+              <CheckCircle2 size={15} className="me-1" /> Confirmar
+            </button>
           )}
-        </AnimatePresence>
+          {cita.estado === "confirmada" && !concluida && (
+            <button onClick={handleConcluir} disabled={saving} className="btn rounded-pill fw-semibold flex-1" style={{ backgroundColor: "#1B4F72", color: "#fff", border: "none" }}>
+              {saving ? "Guardando…" : "✅ Concluir y cobrar"}
+            </button>
+          )}
+          {concluida && (
+            <div className="d-flex align-items-center gap-2 text-success fw-semibold">
+              <CheckCircle2 size={18} /> Cita concluida
+            </div>
+          )}
+          {cita.estado !== "cancelada" && cita.estado !== "atendida" && (
+            <>
+              <button onClick={() => setModoEdicion(true)} className="btn rounded-pill fw-semibold" style={{ backgroundColor: "#E9DED2", color: "#4E3B2B", border: "none" }}>
+                ✏️ Editar
+              </button>
+              <button onClick={handleCancelar} disabled={saving} className="btn rounded-pill fw-semibold" style={{ backgroundColor: "#fff3ef", color: "#b02e2e", border: "1px solid #e4bfbf" }}>
+                <XCircle size={15} className="me-1" /> Cancelar cita
+              </button>
+            </>
+          )}
+        </div>
       </motion.div>
     </motion.div>
   );

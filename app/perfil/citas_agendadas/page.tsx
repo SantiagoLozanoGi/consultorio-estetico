@@ -1,206 +1,213 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { motion } from "framer-motion";
-import TarjetaCita, { Cita } from "../../agendar/tarjetaCita"; // 🟢 Se importa el tipo correcto
-import Link from "next/link";
-import FondoAnim from "@/components/FondoAnim";
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronUp, ChevronDown, CalendarDays } from "lucide-react";
+import { api } from "@/lib/api";
+import CitasAgendadasCard from "./citasAgendadasCard";
+import CitasAgendadasModal from "..administrar/citas/citasAgendadasModal";
 
-// ===== Tipos para filtros =====
-type FiltroTipo = "todas" | "valoracion" | "implementacion";
-type FiltroAutor = "todas" | "usuario" | "doctora";
-
-// ===== Tipo User =====
-interface User {
+interface Cita {
   id: number;
+  userId: number;
   nombres: string;
   apellidos: string;
-  rol: string;
+  telefono: string;
+  correo: string;
+  procedimiento: string;
+  tipoCita: string;
+  fecha: string;
+  hora: string;
+  estado: string;
+  pagado: boolean;
+  monto?: number;
+  montoPagado?: number;
+  metodoPago?: string;
+  nota?: string;
+  fechaCreacion: string;
 }
 
-// ===== API =====
-const API = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:4000";
-
-export default function CitasAgendadasPage() {
-  const [usuario, setUsuario] = useState<User | null>(null);
+export default function CitasAgendadas() {
+  const hoy = new Date();
+  const [mes, setMes] = useState(hoy.getMonth());
+  const [anio, setAnio] = useState(hoy.getFullYear());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [detalle, setDetalle] = useState<Cita | null>(null);
+  const [ascendente, setAscendente] = useState(false);
+  const [filtroEstado, setFiltroEstado] = useState("todos");
   const [citas, setCitas] = useState<Cita[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingCitas, setLoadingCitas] = useState(false);
 
-  // Filtros
-  const [filtroTipo, setFiltroTipo] = useState<FiltroTipo>("todas");
-  const [filtroAutor, setFiltroAutor] = useState<FiltroAutor>("todas");
-
-  // ===== Cargar usuario desde localStorage =====
+  // Cargar citas cuando cambia la fecha seleccionada
   useEffect(() => {
-    const stored = localStorage.getItem("currentUser");
-    if (stored) {
-      try {
-        const parsed: User = JSON.parse(stored);
-        setUsuario(parsed);
-      } catch {
-        console.warn("Error leyendo usuario de localStorage");
-        setUsuario(null);
-      }
-    }
-  }, []);
+    if (!selectedDate) return;
 
-  // ===== Cargar citas desde la BD =====
-  useEffect(() => {
-    if (!usuario) return;
+    setLoadingCitas(true);
+    api.get<{ ok: boolean; citas: Cita[] }>(`/citas?fecha=${selectedDate}`)
+      .then((res) => { if (res.ok) setCitas(res.citas); })
+      .catch(console.error)
+      .finally(() => setLoadingCitas(false));
+  }, [selectedDate]);
 
-    const fetchCitas = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${API}/citas/usuario/${usuario.id}`);
-        const data = await res.json();
-
-        if (data?.ok && Array.isArray(data.citas)) {
-          setCitas(data.citas);
-        } else {
-          setCitas([]);
-        }
-      } catch (err) {
-        console.error("Error cargando citas:", err);
-        setCitas([]);
-      }
-      setLoading(false);
-    };
-
-    fetchCitas();
-  }, [usuario]);
-
-  // ===== Filtrar y ordenar =====
-  const citasFiltradas = useMemo(() => {
-    let filtradas = [...citas];
-
-    if (filtroTipo !== "todas") {
-      filtradas = filtradas.filter((c) => c.tipoCita === filtroTipo);
-    }
-
-    if (filtroAutor !== "todas") {
-      filtradas = filtradas.filter((c) => c.creadaPor === filtroAutor);
-    }
-
-    filtradas.sort(
-      (a, b) =>
-        new Date(b.fechaCreacion).getTime() -
-        new Date(a.fechaCreacion).getTime()
+  // Citas filtradas del día seleccionado
+  const citasDia = useMemo(() => {
+    let lista = [...citas];
+    if (filtroEstado !== "todos") lista = lista.filter((c) => c.estado === filtroEstado);
+    return lista.sort((a, b) =>
+      ascendente ? a.hora.localeCompare(b.hora) : b.hora.localeCompare(a.hora)
     );
+  }, [citas, ascendente, filtroEstado]);
 
-    return filtradas;
-  }, [citas, filtroTipo, filtroAutor]);
+  // Resumen del día
+  const resumen = useMemo(() => ({
+    pendiente:  citas.filter((c) => c.estado === "pendiente").length,
+    confirmada: citas.filter((c) => c.estado === "confirmada").length,
+    atendida:   citas.filter((c) => c.estado === "atendida").length,
+    cancelada:  citas.filter((c) => c.estado === "cancelada").length,
+  }), [citas]);
 
-  // ======= Paleta =======
-  const PALETTE = {
-    bg: "#FAF9F7",
-    text: "#4E3B2B",
-    muted: "#6C584C",
-    accent: "#B08968",
-    border: "#E9DED2",
+  // Refrescar lista tras actualizar una cita
+  const handleUpdated = () => {
+    if (!selectedDate) return;
+    api.get<{ ok: boolean; citas: Cita[] }>(`/citas?fecha=${selectedDate}`)
+      .then((res) => { if (res.ok) setCitas(res.citas); setDetalle(null); })
+      .catch(console.error);
   };
 
-  // ======= Si no hay usuario =======
-  if (!usuario) {
-    return (
-      <main
-        className="relative flex flex-col items-center justify-center min-h-screen text-center"
-        style={{ backgroundColor: PALETTE.bg, color: PALETTE.text }}
-      >
-        <div className="absolute inset-0 -z-10">
-          <FondoAnim />
+  // Calendrio: generar días del mes
+  const primerDia = new Date(anio, mes, 1).getDay() || 7;
+  const diasEnMes = new Date(anio, mes + 1, 0).getDate();
+  const diasCal: (number | null)[] = [];
+  for (let i = 1; i < primerDia; i++) diasCal.push(null);
+  for (let d = 1; d <= diasEnMes; d++) diasCal.push(d);
+
+  const nombresMes = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+  const irMesAnterior = () => { if (mes === 0) { setMes(11); setAnio(a => a - 1); } else setMes(m => m - 1); };
+  const irMesSiguiente = () => { if (mes === 11) { setMes(0); setAnio(a => a + 1); } else setMes(m => m + 1); };
+
+  const seleccionarDia = (dia: number) => {
+    const iso = `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+    setSelectedDate(iso);
+    setCitas([]);
+  };
+
+  return (
+    <div className="flex flex-col gap-6">
+      <h2 className="text-2xl font-bold text-[#4E3B2B]">Citas Agendadas</h2>
+
+      {/* CALENDARIO */}
+      <div className="rounded-2xl bg-white shadow-sm border border-[#E9DED2] p-5">
+        <div className="flex justify-between items-center mb-4">
+          <button onClick={irMesAnterior} className="btn btn-sm rounded-circle" style={{ backgroundColor: "#E9DED2", color: "#4E3B2B" }}>‹</button>
+          <h3 className="font-semibold text-[#4E3B2B]">{nombresMes[mes]} {anio}</h3>
+          <button onClick={irMesSiguiente} className="btn btn-sm rounded-circle" style={{ backgroundColor: "#E9DED2", color: "#4E3B2B" }}>›</button>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="bg-white border border-[#E9DED2] rounded-3xl shadow-lg p-10 max-w-md"
-        >
-          <h2 className="text-2xl font-bold mb-3">
-            Debes iniciar sesión para ver tus citas
-          </h2>
-          <p className="text-[#6C584C] mb-6">
-            Una vez ingreses, podrás ver tus citas agendadas, realizar pagos o
-            descargar comprobantes.
-          </p>
-          <Link
-            href="/login"
-            className="px-6 py-3 bg-[#B08968] text-white rounded-full hover:bg-[#9A7458] transition-all"
-          >
-            Ir a iniciar sesión
-          </Link>
-        </motion.div>
-      </main>
-    );
-  }
-
-  // ======= UI principal =======
-  return (
-    <main className="relative min-h-screen py-10 px-6" style={{ backgroundColor: PALETTE.bg }}>
-      {/* Fondo */}
-      <div className="absolute inset-0 -z-10">
-        <FondoAnim />
-      </div>
-
-      <div className="max-w-6xl mx-auto relative z-10">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-10"
-        >
-          <h1
-            className="text-4xl font-bold mb-3"
-            style={{
-              color: PALETTE.text,
-              fontFamily: "'Playfair Display', serif",
-            }}
-          >
-            Mis citas agendadas
-          </h1>
-        </motion.div>
-
-        {/* Mostrar loading */}
-        {loading ? (
-          <p className="text-center text-[#6C584C]">Cargando citas...</p>
-        ) : citasFiltradas.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="bg-white border border-[#E9DED2] rounded-3xl shadow-lg p-10 text-center"
-          >
-            <p className="text-lg mb-5">
-              {citas.length === 0
-                ? "No tienes citas agendadas todavía."
-                : "No hay citas con esos filtros."}
-            </p>
-            <Link
-              href="/agendar"
-              className="inline-block px-6 py-3 bg-[#B08968] text-white rounded-full hover:bg-[#9A7458] transition-all"
-            >
-              Agendar una cita
-            </Link>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="grid gap-8 md:grid-cols-2"
-          >
-            {citasFiltradas.map((cita, i) => (
-              <motion.div
-                key={cita.id}
-                initial={{ opacity: 0, y: 25 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: i * 0.08 }}
+        <div className="d-grid" style={{ gridTemplateColumns: "repeat(7,1fr)", gap: 4, textAlign: "center" }}>
+          {["L","M","X","J","V","S","D"].map((d) => (
+            <div key={d} style={{ fontSize: "0.72rem", fontWeight: 700, color: "#8B7060", paddingBottom: 4 }}>{d}</div>
+          ))}
+          {diasCal.map((dia, i) => {
+            if (!dia) return <div key={`e-${i}`} />;
+            const iso = `${anio}-${String(mes + 1).padStart(2, "0")}-${String(dia).padStart(2, "0")}`;
+            const isSelected = iso === selectedDate;
+            return (
+              <motion.button
+                key={dia}
+                whileHover={{ scale: 1.15 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => seleccionarDia(dia)}
+                style={{
+                  width: 34, height: 34, borderRadius: "50%", border: "none",
+                  backgroundColor: isSelected ? "#8B6A4B" : "#F5EEE6",
+                  color: isSelected ? "#fff" : "#4E3B2B",
+                  fontWeight: isSelected ? 700 : 400,
+                  fontSize: "0.82rem",
+                  cursor: "pointer",
+                  margin: "0 auto",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}
               >
-                <TarjetaCita cita={cita} modo="lista" /> {/* 🟢 Ahora acepta el tipo correcto */}
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+                {dia}
+              </motion.button>
+            );
+          })}
+        </div>
       </div>
-    </main>
+
+      {/* CITAS DEL DÍA */}
+      {selectedDate && (
+        <div className="rounded-2xl bg-white shadow-sm border border-[#E9DED2] p-5">
+          <div className="flex justify-between items-center flex-wrap gap-3 mb-4">
+            <h4 className="font-semibold text-[#4E3B2B] flex items-center gap-2">
+              <CalendarDays size={18} /> {selectedDate}
+            </h4>
+
+            <div className="flex gap-2 flex-wrap">
+              {/* Filtro estado */}
+              {["todos","pendiente","confirmada","atendida","cancelada"].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFiltroEstado(f)}
+                  className="btn btn-sm rounded-pill text-capitalize"
+                  style={{
+                    backgroundColor: filtroEstado === f ? "#8B6A4B" : "#F5EEE6",
+                    color: filtroEstado === f ? "#fff" : "#4E3B2B",
+                    border: "none",
+                  }}
+                >
+                  {f}
+                </button>
+              ))}
+              {/* Orden */}
+              <button
+                onClick={() => setAscendente((a) => !a)}
+                className="btn btn-sm rounded-pill"
+                style={{ backgroundColor: "#F5EEE6", color: "#4E3B2B", border: "none" }}
+              >
+                {ascendente ? <ChevronUp size={14} /> : <ChevronDown size={14} />} Hora
+              </button>
+            </div>
+          </div>
+
+          {/* Resumen */}
+          <div className="d-flex gap-3 flex-wrap mb-4">
+            {Object.entries(resumen).map(([estado, count]) => (
+              <span key={estado} className="badge rounded-pill px-3 py-2 text-capitalize fw-semibold" style={{ backgroundColor: "#E9DED2", color: "#4E3B2B" }}>
+                {estado}: {count}
+              </span>
+            ))}
+          </div>
+
+          {loadingCitas ? (
+            <div className="text-center py-4">
+              <div className="spinner-border spinner-border-sm" style={{ color: "#B08968" }} role="status" />
+            </div>
+          ) : citasDia.length === 0 ? (
+            <p className="text-center py-4" style={{ color: "#8B7060" }}>
+              No hay citas {filtroEstado !== "todos" ? `con estado "${filtroEstado}"` : ""} para este día.
+            </p>
+          ) : (
+            <div className="d-flex flex-column gap-3">
+              {citasDia.map((cita) => (
+                <CitasAgendadasCard key={cita.id} cita={cita} onClick={() => setDetalle(cita)} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODAL DETALLE */}
+      <AnimatePresence>
+        {detalle && (
+          <CitasAgendadasModal
+            cita={detalle}
+            onClose={() => setDetalle(null)}
+            onUpdated={handleUpdated}
+          />
+        )}
+      </AnimatePresence>
+    </div>
   );
 }

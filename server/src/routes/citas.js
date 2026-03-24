@@ -4,48 +4,35 @@ const { pool } = require("../lib/db");
 const verifyToken = require("../middlewares/verifyToken");
 const requireRole = require("../middlewares/requireRole");
 
-/**
- * =========================
- * GET /citas
- * =========================
- */
+// GET /citas
 router.get("/", verifyToken, async (req, res) => {
   try {
     const { fecha } = req.query;
     const { id: userId, rol } = req.user;
 
     let sql = `
-      SELECT
-        id,
-        userId,
-        nombres,
-        apellidos,
-        procedimiento,
-        tipoCita,
-        fecha,
-        hora,
-        estado,
-        pagado,
-        monto,
-        fechaCreacion
+      SELECT id, "userId", nombres, apellidos, procedimiento, "tipoCita",
+             fecha, hora, estado, pagado, monto, "fechaCreacion"
       FROM citas
     `;
 
     const values = [];
+    const conditions = [];
 
     if (rol === "usuario") {
-      sql += " WHERE userId = ?";
+      conditions.push(`"userId" = $${values.length + 1}`);
       values.push(userId);
     }
 
     if (fecha) {
-      sql += values.length ? " AND fecha = ?" : " WHERE fecha = ?";
+      conditions.push(`fecha = $${values.length + 1}`);
       values.push(fecha);
     }
 
+    if (conditions.length) sql += " WHERE " + conditions.join(" AND ");
     sql += " ORDER BY fecha ASC, hora ASC";
 
-    const [rows] = await pool.query(sql, values);
+    const { rows } = await pool.query(sql, values);
     res.json({ ok: true, citas: rows });
   } catch (err) {
     console.error(err);
@@ -53,12 +40,7 @@ router.get("/", verifyToken, async (req, res) => {
   }
 });
 
-/**
- * =========================
- * POST /citas
- * =========================
- * usuario / admin / ayudante / developer
- */
+// POST /citas
 router.post(
   "/",
   verifyToken,
@@ -66,7 +48,7 @@ router.post(
   async (req, res) => {
     try {
       const {
-        userId, // opcional: admin/ayudante pueden crear para otros
+        userId,
         nombres,
         apellidos,
         telefono,
@@ -80,61 +62,31 @@ router.post(
 
       const ownerId = userId || req.user.id;
 
-      // ⛔ Bloqueo de hora
-      const [ocupada] = await pool.query(
-        `
-        SELECT id FROM citas
-        WHERE fecha = ? AND hora = ?
-        AND estado NOT IN ('cancelada')
-        `,
+      // Verificar disponibilidad
+      const { rows: ocupada } = await pool.query(
+        `SELECT id FROM citas
+         WHERE fecha = $1 AND hora = $2 AND estado NOT IN ('cancelada')`,
         [fecha, hora]
       );
 
       if (ocupada.length) {
-        return res.status(409).json({
-          ok: false,
-          error: "Hora no disponible",
-        });
+        return res.status(409).json({ ok: false, error: "Hora no disponible" });
       }
 
-      const [result] = await pool.query(
-        `
-        INSERT INTO citas (
-          userId,
-          nombres,
-          apellidos,
-          telefono,
-          correo,
-          procedimiento,
-          tipoCita,
-          nota,
-          fecha,
-          hora,
-          estado,
-          pagado,
-          fechaCreacion
-        ) VALUES (
-          ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-          'pendiente',
-          0,
-          NOW()
-        )
-        `,
-        [
-          ownerId,
-          nombres,
-          apellidos,
-          telefono,
-          correo,
-          procedimiento,
-          tipoCita,
-          nota ?? null,
-          fecha,
-          hora,
-        ]
+      const { rows } = await pool.query(
+        `INSERT INTO citas (
+           "userId", nombres, apellidos, telefono, correo,
+           procedimiento, "tipoCita", nota, fecha, hora,
+           estado, pagado, "fechaCreacion"
+         ) VALUES (
+           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+           'pendiente', false, NOW()
+         ) RETURNING id`,
+        [ownerId, nombres, apellidos, telefono, correo,
+         procedimiento, tipoCita, nota ?? null, fecha, hora]
       );
 
-      res.status(201).json({ ok: true, id: result.insertId });
+      res.status(201).json({ ok: true, id: rows[0].id });
     } catch (err) {
       console.error(err);
       res.status(500).json({ ok: false });
@@ -142,54 +94,39 @@ router.post(
   }
 );
 
-/**
- * =========================
- * PUT /citas/:id
- * =========================
- */
+// PUT /citas/:id
 router.put("/:id", verifyToken, async (req, res) => {
   const { rol, id: userId } = req.user;
   const { id } = req.params;
 
   try {
-    // 👤 Usuario: solo cancelar
     if (rol === "usuario") {
       if (req.body.estado !== "cancelada") {
         return res.status(403).json({ ok: false });
       }
-
       await pool.query(
-        `
-        UPDATE citas
-        SET estado = 'cancelada'
-        WHERE id = ? AND userId = ?
-        `,
+        `UPDATE citas SET estado = 'cancelada' WHERE id = $1 AND "userId" = $2`,
         [id, userId]
       );
-
       return res.json({ ok: true });
     }
 
-    // 🧑‍⚕️ Admin / Ayudante / Developer
     const allowed = ["fecha", "hora", "estado", "nota"];
     const sets = [];
     const values = [];
 
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
-        sets.push(`${key} = ?`);
+        sets.push(`${key} = $${values.length + 1}`);
         values.push(req.body[key]);
       }
     }
 
-    if (!sets.length) {
-      return res.status(400).json({ ok: false });
-    }
+    if (!sets.length) return res.status(400).json({ ok: false });
 
     values.push(id);
-
     await pool.query(
-      `UPDATE citas SET ${sets.join(", ")} WHERE id = ?`,
+      `UPDATE citas SET ${sets.join(", ")} WHERE id = $${values.length}`,
       values
     );
 
@@ -200,11 +137,7 @@ router.put("/:id", verifyToken, async (req, res) => {
   }
 });
 
-/**
- * =========================
- * CONFIRMAR PAGO
- * =========================
- */
+// POST /citas/:id/confirmar-pago
 router.post(
   "/:id/confirmar-pago",
   verifyToken,
@@ -218,16 +151,10 @@ router.post(
     }
 
     await pool.query(
-      `
-      UPDATE citas
-      SET
-        pagado = 1,
-        monto = ?,
-        estado = 'pagada',
-        fechaPago = NOW(),
-        confirmadoPor = ?
-      WHERE id = ?
-      `,
+      `UPDATE citas
+       SET pagado = true, monto = $1, estado = 'pagada',
+           "fechaPago" = NOW(), "confirmadoPor" = $2
+       WHERE id = $3`,
       [monto, req.user.id, id]
     );
 
@@ -235,17 +162,13 @@ router.post(
   }
 );
 
-/**
- * =========================
- * DELETE /citas/:id
- * =========================
- */
+// DELETE /citas/:id
 router.delete(
   "/:id",
   verifyToken,
   requireRole(["admin", "ayudante", "developer"]),
   async (req, res) => {
-    await pool.query("DELETE FROM citas WHERE id = ?", [req.params.id]);
+    await pool.query("DELETE FROM citas WHERE id = $1", [req.params.id]);
     res.json({ ok: true });
   }
 );

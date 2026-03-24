@@ -1,42 +1,22 @@
-// server/src/routes/reportes.js
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../lib/db");
 
-/**
- * GET /reportes
- * Devuelve todos los reportes mensuales guardados.
- */
 router.get("/", async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT
-         id,
-         mes,
-         anio,
-         fechaGeneracion,
-         totalOnline,
-         totalConsultorio,
-         totalEsperado,
-         archivoURL
+    const { rows } = await pool.query(
+      `SELECT id, mes, anio, "fechaGeneracion",
+              "totalOnline", "totalConsultorio", "totalEsperado", "archivoURL"
        FROM reportes_mensuales
-       ORDER BY fechaGeneracion DESC`
+       ORDER BY "fechaGeneracion" DESC`
     );
-
     return res.json({ ok: true, reportes: rows });
   } catch (err) {
     console.error("Error GET /reportes:", err);
-    return res
-      .status(500)
-      .json({ ok: false, error: "Error al obtener reportes" });
+    return res.status(500).json({ ok: false, error: "Error al obtener reportes" });
   }
 });
 
-/**
- * POST /reportes
- * Crea o reemplaza un reporte para un mes/año.
- * Body esperado: { mes, anio, totalOnline, totalConsultorio, totalEsperado, archivoURL? }
- */
 router.post("/", async (req, res) => {
   try {
     const {
@@ -49,40 +29,28 @@ router.post("/", async (req, res) => {
     } = req.body;
 
     if (!mes || !anio) {
-      return res.status(400).json({
-        ok: false,
-        error: "Campos 'mes' y 'anio' son obligatorios",
-      });
+      return res.status(400).json({ ok: false, error: "Campos 'mes' y 'anio' son obligatorios" });
     }
 
-    // UPSERT: si ya existe ese mes/año, lo actualizamos
-    const [result] = await pool.query(
-      `
-      INSERT INTO reportes_mensuales
-        (mes, anio, totalOnline, totalConsultorio, totalEsperado, archivoURL)
-      VALUES (?, ?, ?, ?, ?, ?)
-      ON DUPLICATE KEY UPDATE
-        totalOnline = VALUES(totalOnline),
-        totalConsultorio = VALUES(totalConsultorio),
-        totalEsperado = VALUES(totalEsperado),
-        archivoURL = VALUES(archivoURL),
-        fechaGeneracion = CURRENT_TIMESTAMP
-      `,
+    // UPSERT PostgreSQL
+    const { rows } = await pool.query(
+      `INSERT INTO reportes_mensuales
+         (mes, anio, "totalOnline", "totalConsultorio", "totalEsperado", "archivoURL")
+       VALUES ($1, $2, $3, $4, $5, $6)
+       ON CONFLICT (mes, anio) DO UPDATE SET
+         "totalOnline"       = EXCLUDED."totalOnline",
+         "totalConsultorio"  = EXCLUDED."totalConsultorio",
+         "totalEsperado"     = EXCLUDED."totalEsperado",
+         "archivoURL"        = EXCLUDED."archivoURL",
+         "fechaGeneracion"   = NOW()
+       RETURNING *`,
       [mes, anio, totalOnline, totalConsultorio, totalEsperado, archivoURL]
-    );
-
-    // recuperamos el registro final
-    const [rows] = await pool.query(
-      "SELECT * FROM reportes_mensuales WHERE mes = ? AND anio = ?",
-      [mes, anio]
     );
 
     return res.status(201).json({ ok: true, reporte: rows[0] });
   } catch (err) {
     console.error("Error POST /reportes:", err);
-    return res
-      .status(500)
-      .json({ ok: false, error: "Error al guardar reporte" });
+    return res.status(500).json({ ok: false, error: "Error al guardar reporte" });
   }
 });
 

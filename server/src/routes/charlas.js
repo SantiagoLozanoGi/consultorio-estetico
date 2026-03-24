@@ -1,16 +1,11 @@
-// server/src/routes/charlas.js
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../lib/db");
 
-/**
- * GET /charlas
- * Obtiene todas las charlas
- */
 router.get("/", async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT id, titulo, descripcion, detalle, imagen, fecha 
+    const { rows } = await pool.query(
+      `SELECT id, titulo, descripcion, detalle, imagen, fecha
        FROM charlas ORDER BY fecha DESC`
     );
     res.json({ ok: true, charlas: rows });
@@ -20,10 +15,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-/**
- * POST /charlas
- * Crea una charla
- */
 router.post("/", async (req, res) => {
   try {
     const { titulo, descripcion, detalle, imagen, fecha } = req.body;
@@ -31,13 +22,11 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ ok: false, error: "Campos obligatorios faltantes" });
     }
 
-    const [result] = await pool.query(
-      `INSERT INTO charlas (titulo, descripcion, detalle, imagen, fecha) 
-       VALUES (?, ?, ?, ?, ?)`,
+    const { rows } = await pool.query(
+      `INSERT INTO charlas (titulo, descripcion, detalle, imagen, fecha)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
       [titulo, descripcion, detalle, imagen, fecha ?? null]
     );
-
-    const [rows] = await pool.query("SELECT * FROM charlas WHERE id = ?", [result.insertId]);
     res.status(201).json({ ok: true, charla: rows[0] });
   } catch (err) {
     console.error("Error POST /charlas:", err);
@@ -45,16 +34,12 @@ router.post("/", async (req, res) => {
   }
 });
 
-/**
- * PUT /charlas/:id
- * Actualiza una charla
- */
 router.put("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const datos = req.body;
 
-    if (Object.keys(datos).length === 0) {
+    if (!Object.keys(datos).length) {
       return res.status(400).json({ ok: false, error: "No hay datos para actualizar" });
     }
 
@@ -62,15 +47,15 @@ router.put("/:id", async (req, res) => {
     const valores = [];
 
     Object.entries(datos).forEach(([key, value]) => {
-      campos.push(`${key} = ?`);
+      campos.push(`${key} = $${valores.length + 1}`);
       valores.push(value);
     });
 
     valores.push(id);
-
-    await pool.query(`UPDATE charlas SET ${campos.join(", ")} WHERE id = ?`, valores);
-
-    const [rows] = await pool.query("SELECT * FROM charlas WHERE id = ?", [id]);
+    const { rows } = await pool.query(
+      `UPDATE charlas SET ${campos.join(", ")} WHERE id = $${valores.length} RETURNING *`,
+      valores
+    );
     res.json({ ok: true, charla: rows[0] });
   } catch (err) {
     console.error("Error PUT /charlas:", err);
@@ -78,12 +63,9 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-/**
- * DELETE /charlas/:id
- */
 router.delete("/:id", async (req, res) => {
   try {
-    await pool.query("DELETE FROM charlas WHERE id = ?", [req.params.id]);
+    await pool.query("DELETE FROM charlas WHERE id = $1", [req.params.id]);
     res.json({ ok: true });
   } catch (err) {
     console.error("Error DELETE /charlas:", err);
