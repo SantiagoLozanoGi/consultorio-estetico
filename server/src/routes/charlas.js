@@ -1,76 +1,129 @@
-const express = require("express");
-const router = express.Router();
-const { pool } = require("../lib/db");
+const express     = require("express");
+const router      = express.Router();
+const { pool }    = require("../lib/db");
+const verifyToken = require("../middlewares/verifyToken");
+const requireRole = require("../middlewares/requireRole");
 
-router.get("/", async (req, res) => {
+// GET /charlas — público, incluye galería
+router.get("/", async (_req, res) => {
   try {
     const { rows } = await pool.query(
-      `SELECT id, titulo, descripcion, detalle, imagen, fecha
-       FROM charlas ORDER BY fecha DESC`
+      `SELECT c.id, c.titulo, c.descripcion, c.detalle, c.imagen, c.fecha, c.creado_en,
+              COALESCE(
+                json_agg(
+                  json_build_object('id', g.id, 'url', g.url, 'tipo', g.tipo, 'orden', g.orden)
+                  ORDER BY g.orden ASC
+                ) FILTER (WHERE g.id IS NOT NULL),
+                '[]'
+              ) AS galeria
+       FROM charlas c
+       LEFT JOIN charla_galeria g ON g.charla_id = c.id
+       GROUP BY c.id
+       ORDER BY c.fecha DESC NULLS LAST, c.creado_en DESC`
     );
-    res.json({ ok: true, charlas: rows });
+    return res.json({ ok: true, charlas: rows });
   } catch (err) {
     console.error("Error GET /charlas:", err);
-    res.status(500).json({ ok: false, error: "Error al obtener charlas" });
+    return res.status(500).json({ ok: false, error: "Error al obtener charlas" });
   }
 });
 
-router.post("/", async (req, res) => {
-  try {
-    const { titulo, descripcion, detalle, imagen, fecha } = req.body;
-    if (!titulo || !descripcion || !detalle || !imagen) {
-      return res.status(400).json({ ok: false, error: "Campos obligatorios faltantes" });
+// POST /charlas — solo admin
+router.post(
+  "/",
+  verifyToken,
+  requireRole(["admin", "developer"]),
+  async (req, res) => {
+    try {
+      const { titulo, descripcion, detalle, imagen, fecha, galeria = [] } = req.body;
+
+      if (!titulo?.trim() || !descripcion?.trim() || !detalle?.trim()) {
+        return res.status(400).json({ ok: false, error: "Título, descripción y detalle son obligatorios" });
+      }
+
+      // Insertar charla principal
+      const { rows } = await pool.query(
+        `INSERT INTO charlas (titulo, descripcion, detalle, imagen, fecha)
+         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+        [titulo, descripcion, detalle, imagen || "", fecha || null]
+      );
+      const charla = rows[0];
+
+      // Insertar galería si viene
+      if (galeria.length) {
+        for (let i = 0; i < galeria.length; i++) {
+          const url = typeof galeria[i] === "string" ? galeria[i] : galeria[i].url;
+          const tipo = galeria[i]?.tipo || "imagen";
+          await pool.query(
+            `INSERT INTO charla_galeria (charla_id, url, tipo, orden) VALUES ($1,$2,$3,$4)`,
+            [charla.id, url, tipo, i]
+          );
+        }
+      }
+
+      return res.status(201).json({ ok: true, charla });
+    } catch (err) {
+      console.error("Error POST /charlas:", err);
+      return res.status(500).json({ ok: false, error: "Error al crear charla" });
     }
-
-    const { rows } = await pool.query(
-      `INSERT INTO charlas (titulo, descripcion, detalle, imagen, fecha)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [titulo, descripcion, detalle, imagen, fecha ?? null]
-    );
-    res.status(201).json({ ok: true, charla: rows[0] });
-  } catch (err) {
-    console.error("Error POST /charlas:", err);
-    res.status(500).json({ ok: false, error: "Error al crear charla" });
   }
-});
+);
 
-router.put("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const datos = req.body;
+// PUT /charlas/:id — solo admin
+router.put(
+  "/:id",
+  verifyToken,
+  requireRole(["admin", "developer"]),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { titulo, descripcion, detalle, imagen, fecha, galeria } = req.body;
 
-    if (!Object.keys(datos).length) {
-      return res.status(400).json({ ok: false, error: "No hay datos para actualizar" });
+      const { rows } = await pool.query(
+        `UPDATE charlas
+         SET titulo=$1, descripcion=$2, detalle=$3, imagen=$4, fecha=$5, actualizado_en=NOW()
+         WHERE id=$6 RETURNING *`,
+        [titulo, descripcion, detalle, imagen || "", fecha || null, id]
+      );
+
+      if (!rows.length) return res.status(404).json({ ok: false, error: "Charla no encontrada" });
+
+      // Reemplazar galería si viene
+      if (Array.isArray(galeria)) {
+        await pool.query("DELETE FROM charla_galeria WHERE charla_id = $1", [id]);
+        for (let i = 0; i < galeria.length; i++) {
+          const url  = typeof galeria[i] === "string" ? galeria[i] : galeria[i].url;
+          const tipo = galeria[i]?.tipo || "imagen";
+          await pool.query(
+            `INSERT INTO charla_galeria (charla_id, url, tipo, orden) VALUES ($1,$2,$3,$4)`,
+            [id, url, tipo, i]
+          );
+        }
+      }
+
+      return res.json({ ok: true, charla: rows[0] });
+    } catch (err) {
+      console.error("Error PUT /charlas/:id:", err);
+      return res.status(500).json({ ok: false, error: "Error al actualizar charla" });
     }
-
-    const campos = [];
-    const valores = [];
-
-    Object.entries(datos).forEach(([key, value]) => {
-      campos.push(`${key} = $${valores.length + 1}`);
-      valores.push(value);
-    });
-
-    valores.push(id);
-    const { rows } = await pool.query(
-      `UPDATE charlas SET ${campos.join(", ")} WHERE id = $${valores.length} RETURNING *`,
-      valores
-    );
-    res.json({ ok: true, charla: rows[0] });
-  } catch (err) {
-    console.error("Error PUT /charlas:", err);
-    res.status(500).json({ ok: false, error: "Error al actualizar charla" });
   }
-});
+);
 
-router.delete("/:id", async (req, res) => {
-  try {
-    await pool.query("DELETE FROM charlas WHERE id = $1", [req.params.id]);
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("Error DELETE /charlas:", err);
-    res.status(500).json({ ok: false, error: "Error al eliminar charla" });
+// DELETE /charlas/:id — solo admin
+router.delete(
+  "/:id",
+  verifyToken,
+  requireRole(["admin", "developer"]),
+  async (req, res) => {
+    try {
+      // charla_galeria se borra por CASCADE
+      await pool.query("DELETE FROM charlas WHERE id = $1", [req.params.id]);
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error("Error DELETE /charlas/:id:", err);
+      return res.status(500).json({ ok: false, error: "Error al eliminar charla" });
+    }
   }
-});
+);
 
 module.exports = router;

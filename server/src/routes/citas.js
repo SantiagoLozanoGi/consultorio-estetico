@@ -1,6 +1,6 @@
-const express = require("express");
-const router = express.Router();
-const { pool } = require("../lib/db");
+const express     = require("express");
+const router      = express.Router();
+const { pool }    = require("../lib/db");
 const verifyToken = require("../middlewares/verifyToken");
 const requireRole = require("../middlewares/requireRole");
 
@@ -11,16 +11,18 @@ router.get("/", verifyToken, async (req, res) => {
     const { id: userId, rol } = req.user;
 
     let sql = `
-      SELECT id, "userId", nombres, apellidos, procedimiento, "tipoCita",
-             fecha, hora, estado, pagado, monto, "fechaCreacion"
+      SELECT id, user_id, nombres, apellidos, telefono, correo,
+             procedimiento, tipo_cita, nota, fecha, hora,
+             estado, pagado, monto, monto_pagado, monto_restante,
+             metodo_pago, tipo_pago_consultorio, creado_en
       FROM citas
     `;
-
     const values = [];
     const conditions = [];
 
+    // Usuario normal: solo ve sus propias citas
     if (rol === "usuario") {
-      conditions.push(`"userId" = $${values.length + 1}`);
+      conditions.push(`user_id = $${values.length + 1}`);
       values.push(userId);
     }
 
@@ -33,10 +35,10 @@ router.get("/", verifyToken, async (req, res) => {
     sql += " ORDER BY fecha ASC, hora ASC";
 
     const { rows } = await pool.query(sql, values);
-    res.json({ ok: true, citas: rows });
+    return res.json({ ok: true, citas: rows });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false });
+    console.error("Error GET /citas:", err);
+    return res.status(500).json({ ok: false, error: "Error al obtener citas" });
   }
 });
 
@@ -48,19 +50,12 @@ router.post(
   async (req, res) => {
     try {
       const {
-        userId,
-        nombres,
-        apellidos,
-        telefono,
-        correo,
-        procedimiento,
-        tipoCita,
-        nota,
-        fecha,
-        hora,
+        user_id, nombres, apellidos, telefono, correo,
+        procedimiento, procedimiento_id, tipo_cita,
+        nota, fecha, hora,
       } = req.body;
 
-      const ownerId = userId || req.user.id;
+      const ownerId = user_id || req.user.id;
 
       // Verificar disponibilidad
       const { rows: ocupada } = await pool.query(
@@ -75,21 +70,21 @@ router.post(
 
       const { rows } = await pool.query(
         `INSERT INTO citas (
-           "userId", nombres, apellidos, telefono, correo,
-           procedimiento, "tipoCita", nota, fecha, hora,
-           estado, pagado, "fechaCreacion"
+           user_id, nombres, apellidos, telefono, correo,
+           procedimiento, procedimiento_id, tipo_cita,
+           nota, fecha, hora, estado, pagado
          ) VALUES (
-           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-           'pendiente', false, NOW()
+           $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'pendiente',false
          ) RETURNING id`,
-        [ownerId, nombres, apellidos, telefono, correo,
-         procedimiento, tipoCita, nota ?? null, fecha, hora]
+        [ownerId, nombres, apellidos || "", telefono || "",
+         correo || "", procedimiento, procedimiento_id || null,
+         tipo_cita || "valoracion", nota || null, fecha, hora]
       );
 
-      res.status(201).json({ ok: true, id: rows[0].id });
+      return res.status(201).json({ ok: true, id: rows[0].id });
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ ok: false });
+      console.error("Error POST /citas:", err);
+      return res.status(500).json({ ok: false, error: "Error al crear cita" });
     }
   }
 );
@@ -101,19 +96,22 @@ router.put("/:id", verifyToken, async (req, res) => {
 
   try {
     if (rol === "usuario") {
+      // Usuario solo puede cancelar sus propias citas
       if (req.body.estado !== "cancelada") {
-        return res.status(403).json({ ok: false });
+        return res.status(403).json({ ok: false, error: "Solo puedes cancelar tus propias citas" });
       }
       await pool.query(
-        `UPDATE citas SET estado = 'cancelada' WHERE id = $1 AND "userId" = $2`,
+        `UPDATE citas SET estado='cancelada', actualizado_en=NOW()
+         WHERE id=$1 AND user_id=$2`,
         [id, userId]
       );
       return res.json({ ok: true });
     }
 
-    const allowed = ["fecha", "hora", "estado", "nota"];
-    const sets = [];
-    const values = [];
+    // Admin / ayudante / developer — pueden editar campos autorizados
+    const allowed = ["fecha", "hora", "estado", "nota", "motivo_cancelacion"];
+    const sets    = [];
+    const values  = [];
 
     for (const key of allowed) {
       if (req.body[key] !== undefined) {
@@ -122,54 +120,72 @@ router.put("/:id", verifyToken, async (req, res) => {
       }
     }
 
-    if (!sets.length) return res.status(400).json({ ok: false });
+    if (!sets.length) return res.status(400).json({ ok: false, error: "Sin campos para actualizar" });
 
+    sets.push(`actualizado_en = NOW()`);
     values.push(id);
+
     await pool.query(
       `UPDATE citas SET ${sets.join(", ")} WHERE id = $${values.length}`,
       values
     );
 
-    res.json({ ok: true });
+    return res.json({ ok: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ ok: false });
+    console.error("Error PUT /citas/:id:", err);
+    return res.status(500).json({ ok: false, error: "Error al actualizar cita" });
   }
 });
 
-// POST /citas/:id/confirmar-pago
+// POST /citas/:id/confirmar-pago — solo admin
 router.post(
   "/:id/confirmar-pago",
   verifyToken,
   requireRole(["admin", "developer"]),
   async (req, res) => {
-    const { id } = req.params;
-    const { monto } = req.body;
+    try {
+      const { id } = req.params;
+      const { monto, monto_pagado, metodo_pago, tipo_pago_consultorio } = req.body;
 
-    if (!monto || monto <= 0) {
-      return res.status(400).json({ ok: false });
+      if (!monto || monto <= 0) {
+        return res.status(400).json({ ok: false, error: "Monto inválido" });
+      }
+
+      const pagado       = monto_pagado >= monto;
+      const monto_restante = Math.max(monto - (monto_pagado || 0), 0);
+
+      await pool.query(
+        `UPDATE citas SET
+           pagado=$1, monto=$2, monto_pagado=$3, monto_restante=$4,
+           metodo_pago=$5, tipo_pago_consultorio=$6,
+           estado=$7, actualizado_en=NOW()
+         WHERE id=$8`,
+        [pagado, monto, monto_pagado || 0, monto_restante,
+         metodo_pago || "Consultorio", tipo_pago_consultorio || null,
+         pagado ? "atendida" : "confirmada", id]
+      );
+
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error("Error POST /citas/:id/confirmar-pago:", err);
+      return res.status(500).json({ ok: false, error: "Error al confirmar pago" });
     }
-
-    await pool.query(
-      `UPDATE citas
-       SET pagado = true, monto = $1, estado = 'pagada',
-           "fechaPago" = NOW(), "confirmadoPor" = $2
-       WHERE id = $3`,
-      [monto, req.user.id, id]
-    );
-
-    res.json({ ok: true });
   }
 );
 
-// DELETE /citas/:id
+// DELETE /citas/:id — solo admin
 router.delete(
   "/:id",
   verifyToken,
   requireRole(["admin", "ayudante", "developer"]),
   async (req, res) => {
-    await pool.query("DELETE FROM citas WHERE id = $1", [req.params.id]);
-    res.json({ ok: true });
+    try {
+      await pool.query("DELETE FROM citas WHERE id = $1", [req.params.id]);
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error("Error DELETE /citas/:id:", err);
+      return res.status(500).json({ ok: false, error: "Error al eliminar cita" });
+    }
   }
 );
 
