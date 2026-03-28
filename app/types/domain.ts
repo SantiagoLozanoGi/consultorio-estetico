@@ -7,11 +7,10 @@
 // ============================================================
 
 export type RolUsuario =
-  | "user"
-  | "admin"
-  | "medico"
-  | "paciente"
-  | "recepcionista"; // puedes extender roles en el futuro
+  | "usuario"    // paciente / usuario normal
+  | "admin"      // administrador
+  | "developer"  // acceso total interno
+  | "ayudante";  // recepcionista / asistente
 
 // Usuario "ligero" que suele viajar en la sesión (auth/google, etc.)
 export interface SessionUser {

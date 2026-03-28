@@ -309,7 +309,7 @@ Mi mensaje es: ${message}`;
           </div>
 
           <p style={{ color: "#E9DED2", fontSize: "0.9rem" }}>
-            © 2023 Clínica Estética Dra. Juliet Medina. Todos los derechos reservados.
+            © 2023 Clínica Estética Dra. Julieth Medina. Todos los derechos reservados.
           </p>
 
           {/* === Créditos === */}
@@ -325,7 +325,7 @@ Mi mensaje es: ${message}`;
           >
             Página diseñada por{" "}
             <a
-              href="https://github.com/Sekkon0906"
+              href="https://portafoliojmo.vercel.app"
               target="_blank"
               rel="noopener noreferrer"
               className="relative designer-link"

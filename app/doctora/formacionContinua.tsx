@@ -3,9 +3,10 @@
 import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { getCharlas } from "../utils/localDB";
 
-// Tipo para las charlas (según cómo las usas en el componente)
+// ✅ Datos desde el backend — ya no localDB
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+
 interface Charla {
   id: number;
   titulo: string;
@@ -21,21 +22,39 @@ export default function FormacionContinua() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [cooldown, setCooldown] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [charlaSeleccionada, setCharlaSeleccionada] = useState<number | null>(
-    null
-  );
+  const [charlaSeleccionada, setCharlaSeleccionada] = useState<number | null>(null);
   const [galeriaIndex, setGaleriaIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const seccionRef = useRef<HTMLDivElement | null>(null);
 
-  // === Cargar charlas desde localDB ===
+  // ✅ Cargar charlas desde el backend
   useEffect(() => {
-    // Si getCharlas ya devuelve el tipo correcto puedes quitar el "as Charla[]"
-    const data = getCharlas() as Charla[];
-    setCharlas(data);
+    async function fetchCharlas() {
+      try {
+        const res = await fetch(`${API_BASE}/charlas`, { cache: "no-store" });
+        if (!res.ok) throw new Error("Error al cargar charlas");
+        const data = await res.json();
+        const lista: Charla[] = data.charlas ?? [];
+
+        // Normalizar galería: el backend devuelve [{url, tipo, ...}] o string[]
+        const normalizada = lista.map((c) => ({
+          ...c,
+          galeria: Array.isArray(c.galeria)
+            ? c.galeria.map((g) =>
+                typeof g === "string" ? g : (g as { url: string }).url
+              )
+            : [],
+        }));
+
+        setCharlas(normalizada);
+      } catch (err) {
+        console.error("Error cargando charlas:", err);
+      }
+    }
+    fetchCharlas();
   }, []);
 
-  // === Scroll control entre charlas ===
+  // Control de scroll entre charlas
   useEffect(() => {
     const handleScroll = (e: WheelEvent) => {
       if (cooldown || showModal || charlas.length === 0) return;
@@ -64,7 +83,7 @@ export default function FormacionContinua() {
     return () => window.removeEventListener("wheel", handleScroll);
   }, [cooldown, showModal, charlas]);
 
-  // === Carrusel automático del modal ===
+  // Carrusel automático del modal
   useEffect(() => {
     if (!showModal || charlaSeleccionada === null) return;
     setProgress(0);
@@ -77,8 +96,7 @@ export default function FormacionContinua() {
         if (p + inc >= 100) {
           setGaleriaIndex(
             (prev) =>
-              (prev + 1) %
-              (charlas[charlaSeleccionada]?.galeria?.length || 1)
+              (prev + 1) % (charlas[charlaSeleccionada]?.galeria?.length || 1)
           );
           return 0;
         }
@@ -92,25 +110,19 @@ export default function FormacionContinua() {
   const siguiente = () =>
     charlaSeleccionada !== null &&
     setGaleriaIndex(
-      (p) =>
-        (p + 1) %
-        (charlas[charlaSeleccionada]?.galeria?.length || 1)
+      (p) => (p + 1) % (charlas[charlaSeleccionada]?.galeria?.length || 1)
     );
 
   const anterior = () =>
     charlaSeleccionada !== null &&
     setGaleriaIndex((p) =>
-      p === 0
-        ? (charlas[charlaSeleccionada]?.galeria?.length || 1) - 1
-        : p - 1
+      p === 0 ? (charlas[charlaSeleccionada]?.galeria?.length || 1) - 1 : p - 1
     );
 
   if (charlas.length === 0)
     return (
       <section className="flex items-center justify-center min-h-screen bg-[#FBF8F4]">
-        <p className="text-[#4E3B2B] text-lg">
-          Cargando formación continua...
-        </p>
+        <p className="text-[#4E3B2B] text-lg">Cargando formación continua...</p>
       </section>
     );
 
@@ -125,21 +137,16 @@ export default function FormacionContinua() {
       <section
         ref={seccionRef}
         className="relative min-h-screen flex flex-col items-center justify-center px-4"
-        style={{
-          background: "linear-gradient(180deg,#F7EFE7 0%,#FBF8F4 100%)",
-        }}
+        style={{ background: "linear-gradient(180deg,#F7EFE7 0%,#FBF8F4 100%)" }}
       >
         <h3
           className="text-3xl font-bold mb-8 text-center"
-          style={{
-            color: "#4E3B2B",
-            fontFamily: "'Playfair Display', serif",
-          }}
+          style={{ color: "#4E3B2B", fontFamily: "'Playfair Display', serif" }}
         >
           Formación Continua
         </h3>
 
-        {/* ===== TARJETA VINETA ===== */}
+        {/* TARJETA */}
         <motion.div
           key={activeIndex}
           initial={{ opacity: 0, y: 50 }}
@@ -154,7 +161,7 @@ export default function FormacionContinua() {
                 : "linear-gradient(180deg,#F8F5F0 0%,#F3E9DF 100%)",
           }}
         >
-          {/* Franja dorada decorativa */}
+          {/* Franja dorada */}
           <div
             style={{
               position: "absolute",
@@ -182,18 +189,22 @@ export default function FormacionContinua() {
           </div>
 
           <div className="text-center md:text-left z-10">
-            <h4
-              className="text-2xl font-semibold mb-2"
-              style={{ color: "#7C5B3E" }}
-            >
+            <h4 className="text-2xl font-semibold mb-2" style={{ color: "#7C5B3E" }}>
               {charla.titulo}
             </h4>
-            <p
-              className="text-[#9B7D5F] mb-4 leading-relaxed"
-              style={{ fontSize: "1rem" }}
-            >
+            <p className="text-[#9B7D5F] mb-4 leading-relaxed" style={{ fontSize: "1rem" }}>
               {charla.descripcion}
             </p>
+            {charla.fecha && (
+              <p className="text-sm text-[#B08968] mb-3">
+                📅{" "}
+                {new Date(charla.fecha).toLocaleDateString("es-CO", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            )}
             <motion.button
               whileHover={{ scale: 1.05 }}
               onClick={() => {
@@ -202,9 +213,7 @@ export default function FormacionContinua() {
                 setGaleriaIndex(0);
               }}
               className="px-6 py-2 font-semibold text-white rounded-full shadow-md transition-all"
-              style={{
-                backgroundColor: "#B08968",
-              }}
+              style={{ backgroundColor: "#B08968" }}
             >
               Saber más
             </motion.button>
@@ -215,10 +224,10 @@ export default function FormacionContinua() {
           className="mt-8 text-sm text-[#6E5A49] italic text-center"
           style={{ maxWidth: "600px" }}
         >
-          Desplázate con la rueda del ratón sin prisa para conocer las
-          experiencias formativas.
+          Desplázate con la rueda del ratón sin prisa para conocer las experiencias formativas.
         </p>
 
+        {/* Dots */}
         <div className="flex justify-center mt-4">
           {charlas.map((_, i) => (
             <motion.div
@@ -226,8 +235,7 @@ export default function FormacionContinua() {
               animate={{
                 scale: activeIndex === i ? 1.3 : 1,
                 opacity: activeIndex === i ? 1 : 0.4,
-                backgroundColor:
-                  activeIndex === i ? "#B08968" : "#D9C3B0",
+                backgroundColor: activeIndex === i ? "#B08968" : "#D9C3B0",
               }}
               transition={{ duration: 0.4 }}
               style={{
@@ -243,7 +251,7 @@ export default function FormacionContinua() {
         </div>
       </section>
 
-      {/* ===== MODAL DETALLE ===== */}
+      {/* MODAL */}
       <AnimatePresence>
         {showModal && charlaSeleccionada !== null && (
           <motion.div
@@ -264,10 +272,7 @@ export default function FormacionContinua() {
               <div className="text-center mb-6">
                 <h4
                   className="text-2xl font-bold mb-2"
-                  style={{
-                    color: "#8C6D4F",
-                    fontFamily: "'Playfair Display'",
-                  }}
+                  style={{ color: "#8C6D4F", fontFamily: "'Playfair Display'" }}
                 >
                   {charlas[charlaSeleccionada].titulo}
                 </h4>
@@ -277,7 +282,7 @@ export default function FormacionContinua() {
                 </p>
               </div>
 
-              {/* Imagen o video */}
+              {/* Media */}
               <div className="relative flex justify-center mb-5">
                 <AnimatePresence mode="wait">
                   <motion.div
@@ -293,7 +298,7 @@ export default function FormacionContinua() {
                         charlas[charlaSeleccionada].galeria?.[galeriaIndex] ||
                         charlas[charlaSeleccionada].imagen;
 
-                      if (media.includes("youtube")) {
+                      if (typeof media === "string" && media.includes("youtube")) {
                         const embed = media.replace("watch?v=", "embed/");
                         return (
                           <iframe
@@ -303,7 +308,7 @@ export default function FormacionContinua() {
                             allowFullScreen
                           />
                         );
-                      } else if (media.endsWith(".mp4")) {
+                      } else if (typeof media === "string" && media.endsWith(".mp4")) {
                         return (
                           <video
                             src={media}
@@ -314,15 +319,12 @@ export default function FormacionContinua() {
                       } else {
                         return (
                           <Image
-                            src={media}
+                            src={typeof media === "string" ? media : charlas[charlaSeleccionada].imagen}
                             alt="Imagen charla"
                             width={700}
                             height={400}
                             className="rounded-3xl shadow-lg object-cover border border-[#E9DED2]"
-                            style={{
-                              maxHeight: "380px",
-                              width: "90%",
-                            }}
+                            style={{ maxHeight: "380px", width: "90%" }}
                           />
                         );
                       }
@@ -330,13 +332,10 @@ export default function FormacionContinua() {
                   </motion.div>
                 </AnimatePresence>
 
-                {/* Contador */}
                 <div className="absolute top-3 right-5 bg-[#B08968]/90 text-white px-3 py-1 rounded-full text-sm shadow">
-                  {galeriaIndex + 1} /{" "}
-                  {charlas[charlaSeleccionada]?.galeria?.length || 1}
+                  {galeriaIndex + 1} / {charlas[charlaSeleccionada]?.galeria?.length || 1}
                 </div>
 
-                {/* Barra progreso */}
                 <motion.div
                   animate={{ width: `${progress}%` }}
                   transition={{ ease: "linear", duration: 0.05 }}
@@ -361,7 +360,6 @@ export default function FormacionContinua() {
                 </button>
               </div>
 
-              {/* Cerrar */}
               <div className="text-center">
                 <button
                   onClick={() => setShowModal(false)}

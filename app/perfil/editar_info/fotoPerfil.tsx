@@ -21,27 +21,24 @@ export default function FotoPerfil({ photo, email, canEdit, setPhoto }: Props) {
     const file = e.target.files?.[0];
     if (!file || !email) return;
 
-    // Mostrar preview inmediato
     const localUrl = URL.createObjectURL(file);
     setPreview(localUrl);
     setUploading(true);
 
     try {
-      // 1. Subir a Supabase Storage — bucket "avatares"
       const ext = file.name.split(".").pop();
-      const path = `${email.replace("@", "_").replace(".", "_")}.${ext}`;
+      // Nombre único basado en el email del usuario
+      const path = `${email.replace(/[@.]/g, "_")}_${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
-        .from("avatares")
+        .from("fotos-perfil")                                      // ✅ bucket correcto
         .upload(path, file, { upsert: true, contentType: file.type });
 
       if (uploadError) throw new Error(uploadError.message);
 
-      // 2. Obtener URL pública
-      const { data } = supabase.storage.from("avatares").getPublicUrl(path);
+      const { data } = supabase.storage.from("fotos-perfil").getPublicUrl(path);
       const publicUrl = data.publicUrl;
 
-      // 3. Guardar URL en la tabla usuarios
       await api.put("/usuarios/me", { photo: publicUrl });
 
       setPhoto(publicUrl);
@@ -49,7 +46,7 @@ export default function FotoPerfil({ photo, email, canEdit, setPhoto }: Props) {
     } catch (err: any) {
       console.error("Error subiendo foto:", err);
       alert("No se pudo subir la foto: " + err.message);
-      setPreview(photo); // Revertir preview
+      setPreview(photo);
     } finally {
       setUploading(false);
     }
@@ -71,7 +68,10 @@ export default function FotoPerfil({ photo, email, canEdit, setPhoto }: Props) {
       <div
         className="mx-auto mb-3 position-relative"
         style={{
-          width: 140, height: 140, borderRadius: "50%", overflow: "hidden",
+          width: 140,
+          height: 140,
+          borderRadius: "50%",
+          overflow: "hidden",
           border: `4px solid ${PALETTE.main}`,
           boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
           backgroundColor: "#f8f9fa",
@@ -85,8 +85,12 @@ export default function FotoPerfil({ photo, email, canEdit, setPhoto }: Props) {
         {uploading && (
           <div
             style={{
-              position: "absolute", inset: 0, background: "rgba(0,0,0,0.4)",
-              display: "flex", alignItems: "center", justifyContent: "center",
+              position: "absolute",
+              inset: 0,
+              background: "rgba(0,0,0,0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <div className="spinner-border spinner-border-sm text-white" role="status" />

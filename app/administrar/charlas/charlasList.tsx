@@ -32,17 +32,30 @@ export default function CharlasList() {
 
   useEffect(() => { loadCharlas(); }, []);
 
-  /* ── Subir imagen principal ──────────────────────────────────────────── */
+  /* ── Imagen principal → backend──────────────── */
   const handleImageUpload = async (file: File) => {
     setUploadingImg(true);
     try {
-      const ext = file.name.split(".").pop();
-      const path = `charlas/${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("imagenes").upload(path, file, { upsert: true, contentType: file.type });
-      if (upErr) throw new Error(upErr.message);
-      const { data } = supabase.storage.from("imagenes").getPublicUrl(path);
-      setForm((prev) => ({ ...prev, imagen: data.publicUrl }));
+      const formData = new FormData();
+      formData.append("file", file);
+
+      // Obtener token de Supabase para el Bearer
+      const { supabase } = await import("@/lib/supabaseClient");
+      const { data: { session } } = await supabase.auth.getSession();
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/charlas/upload-imagen?bucket=charlas`,
+        {
+          method: "POST",
+          headers: session?.access_token
+            ? { Authorization: `Bearer ${session.access_token}` }
+            : {},
+          body: formData,
+        }
+      );
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || "Error subiendo imagen");
+      setForm((prev) => ({ ...prev, imagen: data.url }));
     } catch (e: any) {
       setError("Error subiendo imagen: " + e.message);
     } finally {
@@ -50,21 +63,33 @@ export default function CharlasList() {
     }
   };
 
-  /* ── Subir fotos a galería ───────────────────────────────────────────── */
+  /* ── Galería → backend ───────────────────────── */
   const handleGaleriaUpload = async (files: FileList | null) => {
     if (!files) return;
+    const { supabase } = await import("@/lib/supabaseClient");
+    const { data: { session } } = await supabase.auth.getSession();
+    const headers: HeadersInit = session?.access_token
+      ? { Authorization: `Bearer ${session.access_token}` }
+      : {};
+
     for (const file of Array.from(files)) {
-      const ext = file.name.split(".").pop();
-      const path = `charlas/galeria/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-      const { error: upErr } = await supabase.storage
-        .from("imagenes").upload(path, file, { upsert: true, contentType: file.type });
-      if (upErr) { setError("Error subiendo galería: " + upErr.message); continue; }
-      const { data } = supabase.storage.from("imagenes").getPublicUrl(path);
-      setForm((prev) => ({ ...prev, galeria: [...prev.galeria, data.publicUrl] }));
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/charlas/upload-imagen?bucket=charlas&folder=galeria`,
+          { method: "POST", headers, body: formData }
+        );
+        const data = await res.json();
+        if (!res.ok || !data.ok) { setError("Error subiendo galería: " + data.error); continue; }
+        setForm((prev) => ({ ...prev, galeria: [...prev.galeria, data.url] }));
+      } catch (e: any) {
+        setError("Error subiendo galería: " + e.message);
+      }
     }
   };
 
-  /* ── Guardar ─────────────────────────────────────────────────────────── */
+  /* ── Guardar ──────────────────────────────────────────────────────────── */
   const handleGuardar = async () => {
     if (!form.titulo.trim() || !form.descripcion.trim() || !form.detalle.trim()) {
       setError("Título, descripción y detalle son obligatorios."); return;
@@ -77,7 +102,8 @@ export default function CharlasList() {
       } else if (actual) {
         await api.put(`/charlas/${actual.id}`, body);
       }
-      loadCharlas(); resetForm();
+      loadCharlas();
+      resetForm();
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -85,18 +111,22 @@ export default function CharlasList() {
     }
   };
 
-  /* ── Eliminar ────────────────────────────────────────────────────────── */
+  /* ── Eliminar ─────────────────────────────────────────────────────────── */
   const handleEliminar = async (id: number) => {
     if (!confirm("¿Eliminar esta charla?")) return;
     try {
-      await api.delete(`/charlas/${id}`); loadCharlas();
+      await api.delete(`/charlas/${id}`);
+      loadCharlas();
     } catch (e: any) { setError(e.message); }
   };
 
   const resetForm = () => { setForm(emptyForm); setModo("lista"); setActual(null); };
   const startEditar = (c: Charla) => {
     setActual(c);
-    setForm({ titulo: c.titulo, descripcion: c.descripcion, detalle: c.detalle, imagen: c.imagen, galeria: c.galeria || [], fecha: c.fecha || "" });
+    setForm({
+      titulo: c.titulo, descripcion: c.descripcion, detalle: c.detalle,
+      imagen: c.imagen, galeria: c.galeria || [], fecha: c.fecha || "",
+    });
     setModo("editar");
   };
 
@@ -105,7 +135,11 @@ export default function CharlasList() {
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2 className="fw-bold" style={{ color: "#4E3B2B" }}>Formación / Charlas</h2>
         {modo === "lista" && (
-          <button onClick={() => setModo("crear")} className="btn rounded-pill px-4" style={{ backgroundColor: "#8B6A4B", color: "#fff", border: "none" }}>
+          <button
+            onClick={() => setModo("crear")}
+            className="btn rounded-pill px-4"
+            style={{ backgroundColor: "#8B6A4B", color: "#fff", border: "none" }}
+          >
             + Nueva charla
           </button>
         )}
@@ -127,45 +161,93 @@ export default function CharlasList() {
             <div className="row g-3">
               <div className="col-md-8">
                 <label className="form-label small fw-semibold">Título *</label>
-                <input className="form-control" value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} style={{ borderColor: "#E9DED2" }} />
+                <input
+                  className="form-control"
+                  value={form.titulo}
+                  onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+                  style={{ borderColor: "#E9DED2" }}
+                />
               </div>
               <div className="col-md-4">
                 <label className="form-label small fw-semibold">Fecha</label>
-                <input type="date" className="form-control" value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} style={{ borderColor: "#E9DED2" }} />
+                <input
+                  type="date"
+                  className="form-control"
+                  value={form.fecha}
+                  onChange={(e) => setForm({ ...form, fecha: e.target.value })}
+                  style={{ borderColor: "#E9DED2" }}
+                />
               </div>
               <div className="col-12">
                 <label className="form-label small fw-semibold">Descripción corta *</label>
-                <textarea rows={2} className="form-control" value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} style={{ borderColor: "#E9DED2" }} />
+                <textarea
+                  rows={2}
+                  className="form-control"
+                  value={form.descripcion}
+                  onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+                  style={{ borderColor: "#E9DED2" }}
+                />
               </div>
               <div className="col-12">
                 <label className="form-label small fw-semibold">Detalle completo *</label>
-                <textarea rows={4} className="form-control" value={form.detalle} onChange={(e) => setForm({ ...form, detalle: e.target.value })} style={{ borderColor: "#E9DED2" }} />
+                <textarea
+                  rows={4}
+                  className="form-control"
+                  value={form.detalle}
+                  onChange={(e) => setForm({ ...form, detalle: e.target.value })}
+                  style={{ borderColor: "#E9DED2" }}
+                />
               </div>
               <div className="col-12">
                 <label className="form-label small fw-semibold">Imagen principal</label>
                 <div className="d-flex gap-3 align-items-center flex-wrap">
-                  <input type="file" accept="image/*" className="form-control" style={{ maxWidth: 280, borderColor: "#E9DED2" }}
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }} />
-                  {uploadingImg && <div className="spinner-border spinner-border-sm" style={{ color: "#B08968" }} role="status" />}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="form-control"
+                    style={{ maxWidth: 280, borderColor: "#E9DED2" }}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleImageUpload(f); }}
+                  />
+                  {uploadingImg && (
+                    <div className="spinner-border spinner-border-sm" style={{ color: "#B08968" }} role="status" />
+                  )}
                   {form.imagen && !uploadingImg && (
-                    <img src={form.imagen} alt="preview" style={{ height: 60, borderRadius: 8, objectFit: "cover", border: "1px solid #E9DED2" }} />
+                    <img
+                      src={form.imagen}
+                      alt="preview"
+                      style={{ height: 60, borderRadius: 8, objectFit: "cover", border: "1px solid #E9DED2" }}
+                    />
                   )}
                 </div>
               </div>
               <div className="col-12">
                 <label className="form-label small fw-semibold">Galería (múltiples fotos)</label>
-                <input type="file" accept="image/*" multiple className="form-control" style={{ maxWidth: 320, borderColor: "#E9DED2" }}
-                  onChange={(e) => handleGaleriaUpload(e.target.files)} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="form-control"
+                  style={{ maxWidth: 320, borderColor: "#E9DED2" }}
+                  onChange={(e) => handleGaleriaUpload(e.target.files)}
+                />
                 {form.galeria.length > 0 && (
                   <div className="d-flex gap-2 flex-wrap mt-2">
                     {form.galeria.map((url, i) => (
                       <div key={i} className="position-relative">
-                        <img src={url} alt={`galería ${i}`} style={{ height: 52, width: 52, borderRadius: 6, objectFit: "cover", border: "1px solid #E9DED2" }} />
+                        <img
+                          src={url}
+                          alt={`galería ${i}`}
+                          style={{ height: 52, width: 52, borderRadius: 6, objectFit: "cover", border: "1px solid #E9DED2" }}
+                        />
                         <button
                           className="position-absolute top-0 end-0 rounded-circle border-0 d-flex align-items-center justify-content-center"
                           style={{ width: 18, height: 18, backgroundColor: "#b02e2e", color: "#fff", fontSize: "0.6rem", lineHeight: 1 }}
-                          onClick={() => setForm((prev) => ({ ...prev, galeria: prev.galeria.filter((_, j) => j !== i) }))}
-                        >×</button>
+                          onClick={() =>
+                            setForm((prev) => ({ ...prev, galeria: prev.galeria.filter((_, j) => j !== i) }))
+                          }
+                        >
+                          ×
+                        </button>
                       </div>
                     ))}
                   </div>
@@ -173,10 +255,19 @@ export default function CharlasList() {
               </div>
             </div>
             <div className="d-flex gap-3 mt-4">
-              <button onClick={handleGuardar} disabled={saving || uploadingImg} className="btn rounded-pill fw-semibold flex-1" style={{ backgroundColor: "#8B6A4B", color: "#fff", border: "none" }}>
+              <button
+                onClick={handleGuardar}
+                disabled={saving || uploadingImg}
+                className="btn rounded-pill fw-semibold flex-1"
+                style={{ backgroundColor: "#8B6A4B", color: "#fff", border: "none" }}
+              >
                 {saving ? "Guardando…" : "Guardar"}
               </button>
-              <button onClick={resetForm} className="btn rounded-pill fw-semibold" style={{ backgroundColor: "#E9DED2", color: "#4E3B2B", border: "none" }}>
+              <button
+                onClick={resetForm}
+                className="btn rounded-pill fw-semibold"
+                style={{ backgroundColor: "#E9DED2", color: "#4E3B2B", border: "none" }}
+              >
                 Cancelar
               </button>
             </div>
@@ -190,18 +281,40 @@ export default function CharlasList() {
       ) : (
         <div className="d-flex flex-column gap-3">
           {charlas.map((c) => (
-            <div key={c.id} className="card border-0 rounded-4 shadow-sm p-3 d-flex flex-row gap-3 align-items-start" style={{ backgroundColor: "#FFFDF9" }}>
+            <div
+              key={c.id}
+              className="card border-0 rounded-4 shadow-sm p-3 d-flex flex-row gap-3 align-items-start"
+              style={{ backgroundColor: "#FFFDF9" }}
+            >
               {c.imagen && (
-                <img src={c.imagen} alt={c.titulo} style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", border: "1px solid #E9DED2", flexShrink: 0 }} />
+                <img
+                  src={c.imagen}
+                  alt={c.titulo}
+                  style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover", border: "1px solid #E9DED2", flexShrink: 0 }}
+                />
               )}
               <div className="flex-1 min-w-0">
                 <p className="fw-bold mb-1" style={{ color: "#4E3B2B" }}>{c.titulo}</p>
                 <p className="small mb-0 text-truncate" style={{ color: "#6C584C" }}>{c.descripcion}</p>
-                {c.fecha && <p className="small mb-0" style={{ color: "#8B7060" }}>📅 {c.fecha}</p>}
+                {c.fecha && (
+                  <p className="small mb-0" style={{ color: "#8B7060" }}>📅 {c.fecha}</p>
+                )}
               </div>
               <div className="d-flex gap-2 flex-shrink-0">
-                <button onClick={() => startEditar(c)} className="btn btn-sm rounded-pill" style={{ backgroundColor: "#E9DED2", color: "#4E3B2B", border: "none" }}>✏️</button>
-                <button onClick={() => handleEliminar(c.id)} className="btn btn-sm rounded-pill" style={{ backgroundColor: "#fff3ef", color: "#b02e2e", border: "1px solid #e4bfbf" }}>🗑️</button>
+                <button
+                  onClick={() => startEditar(c)}
+                  className="btn btn-sm rounded-pill"
+                  style={{ backgroundColor: "#E9DED2", color: "#4E3B2B", border: "none" }}
+                >
+                  ✏️
+                </button>
+                <button
+                  onClick={() => handleEliminar(c.id)}
+                  className="btn btn-sm rounded-pill"
+                  style={{ backgroundColor: "#fff3ef", color: "#b02e2e", border: "1px solid #e4bfbf" }}
+                >
+                  🗑️
+                </button>
               </div>
             </div>
           ))}

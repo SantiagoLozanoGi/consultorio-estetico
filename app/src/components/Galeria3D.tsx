@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { getProcedimientos, Procedimiento } from "../../utils/localDB";
+import { getProcedimientosApi } from "../../services/procedimientosApi"; // ✅ API real
+import type { Procedimiento } from "../../types/domain";
 
 export default function Galeria3D() {
   const [tratamientos, setTratamientos] = useState<Procedimiento[]>([]);
@@ -12,30 +13,23 @@ export default function Galeria3D() {
   const [selected, setSelected] = useState<number | null>(null);
   const [mouseTilt, setMouseTilt] = useState({ x: 0, y: 0 });
 
-  // === Cargar y sincronizar procedimientos destacados ===
+  // ✅ Cargar procedimientos destacados desde el backend
   useEffect(() => {
-    const load = () => {
-      const all = getProcedimientos();
-      const destacados = all.filter((p) => p.destacado);
-      setTratamientos(destacados);
-    };
-
+    async function load() {
+      try {
+        const all = await getProcedimientosApi();
+        setTratamientos(all.filter((p) => p.destacado));
+      } catch (err) {
+        console.error("Error cargando procedimientos para galería:", err);
+      }
+    }
     load();
-
-    // Actualiza automáticamente si cambia el localStorage
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === "procedimientos") load();
-    };
-    window.addEventListener("storage", handleStorage);
-
-    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  // === Parámetros visuales ===
   const radius = 360;
   const angle = tratamientos.length > 0 ? 360 / tratamientos.length : 0;
 
-  // === Animación de rotación continua ===
+  // Rotación continua
   useEffect(() => {
     if (isPaused || selected !== null) return;
     let frame: number;
@@ -47,7 +41,7 @@ export default function Galeria3D() {
     return () => cancelAnimationFrame(frame);
   }, [isPaused, selected]);
 
-  // === Movimiento parallax con el mouse ===
+  // Parallax con el mouse
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const x = (e.clientX / window.innerWidth - 0.5) * 30;
@@ -58,7 +52,7 @@ export default function Galeria3D() {
     return () => window.removeEventListener("mousemove", handleMouseMove);
   }, []);
 
-  // === PRNG determinista ===
+  // PRNG determinista para partículas
   function mulberry32(seed: number) {
     return function () {
       let t = (seed += 0x6d2b79f5);
@@ -68,7 +62,6 @@ export default function Galeria3D() {
     };
   }
 
-  // === Partículas decorativas ===
   const particleCount = 16;
   const particles = useMemo(() => {
     const rng = mulberry32(98765);
@@ -121,7 +114,7 @@ export default function Galeria3D() {
         }}
       />
 
-      {/*Partículas */}
+      {/* Partículas */}
       <div
         style={{
           position: "absolute",
@@ -156,7 +149,7 @@ export default function Galeria3D() {
         })}
       </div>
 
-      {/* Rueda principal */}
+      {/* Rueda 3D */}
       {selected === null && tratamientos.length > 0 && (
         <div
           style={{
@@ -219,7 +212,7 @@ export default function Galeria3D() {
         </div>
       )}
 
-      {/* Detalle del tratamiento */}
+      {/* Detalle del tratamiento seleccionado */}
       {selected !== null && (
         <div
           className="shadow-lg rounded-4 p-5 position-relative"
@@ -250,7 +243,6 @@ export default function Galeria3D() {
               fontWeight: 600,
               fontSize: "1rem",
               cursor: "pointer",
-              letterSpacing: "0.5px",
             }}
           >
             ← Volver
@@ -265,10 +257,7 @@ export default function Galeria3D() {
             }}
           >
             <Image
-              src={
-                tratamientos.find((t) => t.id === selected)?.imagen ||
-                "/placeholder.png"
-              }
+              src={tratamientos.find((t) => t.id === selected)?.imagen || "/placeholder.png"}
               alt="Detalle"
               width={500}
               height={400}
@@ -305,7 +294,6 @@ export default function Galeria3D() {
                 borderRadius: "30px",
                 padding: "0.75rem 2rem",
                 textDecoration: "none",
-                transition: "background 0.3s ease",
               }}
             >
               Investigar más
@@ -314,20 +302,20 @@ export default function Galeria3D() {
         </div>
       )}
 
-      {/* 🎨 Estilos globales */}
+      {/* Estilos globales */}
       <style jsx global>{`
         @keyframes pulse {
-          0% { transform: scale(1); opacity: 0.3; }
-          50% { transform: scale(1.3); opacity: 0.6; }
-          100% { transform: scale(1); opacity: 0.3; }
+          0%   { transform: scale(1);   opacity: 0.3; }
+          50%  { transform: scale(1.3); opacity: 0.6; }
+          100% { transform: scale(1);   opacity: 0.3; }
         }
         @keyframes haloSpin {
-          0% { transform: translate(-50%, -50%) rotate(0deg); }
+          0%   { transform: translate(-50%, -50%) rotate(0deg); }
           100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
         @keyframes hueShift {
-          0% { filter: hue-rotate(0deg); }
-          50% { filter: hue-rotate(45deg); }
+          0%   { filter: hue-rotate(0deg); }
+          50%  { filter: hue-rotate(45deg); }
           100% { filter: hue-rotate(0deg); }
         }
         .card3d .badgeTitle {

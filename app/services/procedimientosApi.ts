@@ -1,63 +1,44 @@
 // app/services/procedimientosApi.ts
 import type { Procedimiento } from "../types/domain";
+import { api } from "@/lib/api";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-if (!BASE_URL) {
-  // solo para depurar en local
-  console.warn("⚠ Falta NEXT_PUBLIC_API_BASE_URL en .env del front");
-}
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-export async function getProcedimientosApi(): Promise<Procedimiento[]> {
-  const res = await fetch(`${BASE_URL}/procedimientos`, {
-    // importante para Next (desactiva caché dura en producción)
-    cache: "no-store",
-  });
-
+/** GET /procedimientos/:id — público, sin auth */
+export async function getProcedimientoByIdApi(id: number): Promise<Procedimiento> {
+  const res = await fetch(`${API_BASE}/procedimientos/${id}`, { cache: "no-store" });
   const data = await res.json();
-  if (!res.ok || !data.ok) {
-    throw new Error(data.error || "No se pudieron cargar los procedimientos");
-  }
-  return data.data as Procedimiento[];
-}
-
-export async function createProcedimientoApi(
-  payload: Omit<Procedimiento, "id" | "galeria">
-): Promise<Procedimiento> {
-  const res = await fetch(`${BASE_URL}/procedimientos`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok || !data.ok) {
-    throw new Error(data.error || "No se pudo crear el procedimiento");
-  }
+  if (!res.ok || !data.ok) throw new Error(data.error || "Procedimiento no encontrado");
   return data.data as Procedimiento;
 }
 
+/** GET /procedimientos — público, sin auth */
+export async function getProcedimientosApi(): Promise<Procedimiento[]> {
+  const res = await fetch(`${API_BASE}/procedimientos`, { cache: "no-store" });
+  const data = await res.json();
+  if (!res.ok || !data.ok) throw new Error(data.error || "Error al cargar procedimientos");
+  return data.data as Procedimiento[];
+}
+
+/** POST /procedimientos — admin, con Bearer token */
+export async function createProcedimientoApi(
+  payload: Omit<Procedimiento, "id" | "galeria">
+): Promise<Procedimiento> {
+  const data = await api.post<{ ok: boolean; data: Procedimiento }>("/procedimientos", payload);
+  return data.data;
+}
+
+/** PUT /procedimientos/:id — admin, con Bearer token */
 export async function updateProcedimientoApi(
   id: number,
   payload: Partial<Omit<Procedimiento, "id">>
 ): Promise<Procedimiento> {
-  const res = await fetch(`${BASE_URL}/procedimientos/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await res.json();
-  if (!res.ok || !data.ok) {
-    throw new Error(data.error || "No se pudo actualizar el procedimiento");
-  }
-  return data.data as Procedimiento;
+  const data = await api.put<{ ok: boolean; data: Procedimiento }>(`/procedimientos/${id}`, payload);
+  return data.data;
 }
 
+/** DELETE /procedimientos/:id — admin, con Bearer token */
 export async function deleteProcedimientoApi(id: number): Promise<void> {
-  const res = await fetch(`${BASE_URL}/procedimientos/${id}`, {
-    method: "DELETE",
-  });
-  const data = await res.json();
-  if (!res.ok || !data.ok) {
-    throw new Error(data.error || "No se pudo eliminar el procedimiento");
-  }
+  await api.delete(`/procedimientos/${id}`);
 }

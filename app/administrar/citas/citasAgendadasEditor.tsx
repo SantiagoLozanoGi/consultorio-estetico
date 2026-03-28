@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api";
-
-interface Cita {
-  id: number; procedimiento: string; fecha: string;
-  hora: string; estado: string; nota?: string;
-}
+import type { Cita } from "./helpers"; // ✅ imported from helpers, no local interface
 
 interface Props {
   cita: Cita;
@@ -89,7 +85,14 @@ export default function CitasAgendadasEditor({ cita: citaInicial, onClose }: Pro
         </div>
         <div>
           <label className="form-label small fw-semibold" style={{ color: "#6E5A49" }}>Nota</label>
-          <textarea name="nota" className="form-control" rows={3} value={form.nota || ""} onChange={handleChange} style={{ borderColor: "#E5D8C8", backgroundColor: "#FFFDF9" }} />
+          <textarea
+            name="nota"
+            className="form-control"
+            rows={3}
+            value={form.nota ?? ""}  
+            onChange={handleChange}
+            style={{ borderColor: "#E5D8C8", backgroundColor: "#FFFDF9" }}
+          />
         </div>
       </div>
 

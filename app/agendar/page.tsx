@@ -4,13 +4,10 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 
-// ✅ Tipos de dominio reales
-import type { User, Procedimiento, Cita } from "../types/domain";
-
-// ✅ Servicios que hablan con el backend
+import type { Procedimiento, Cita } from "../types/domain";
 import { getProcedimientosApi } from "../services/procedimientosApi";
+import { useAuth } from "@/context/AuthContext";
 
-// ✅ Componentes del flujo de agenda
 import AgendarCalendar from "./agendarCalendar";
 import AgendarForm, { AgendarFormData } from "./agendarForm";
 import AgendarPago, { CitaSinPagos } from "./agendarPago";
@@ -28,9 +25,6 @@ export const PALETTE = {
   textSoft: "#4B3726",
 };
 
-// ======================
-// CONTENIDO DE LA PÁGINA
-// ======================
 function AgendarPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,23 +33,12 @@ function AgendarPageContent() {
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [fecha, setFecha] = useState<Date | null>(null);
   const [hora, setHora] = useState<string>("");
-
-  const [usuario, setUsuario] = useState<User | null>(null);
   const [procedimientos, setProcedimientos] = useState<Procedimiento[]>([]);
-
-  // Borrador de cita (sin datos de pago) y cita final creada en BD
   const [citaDraft, setCitaDraft] = useState<CitaSinPagos | null>(null);
   const [citaCreada, setCitaCreada] = useState<Cita | null>(null);
-
-  const [metodoPago, setMetodoPago] = useState<"Consultorio" | "Online" | null>(
-    null
-  );
-  const [tipoPagoConsultorio, setTipoPagoConsultorio] = useState<
-    "Efectivo" | "Tarjeta" | undefined
-  >(undefined);
-  const [tipoPagoOnline, setTipoPagoOnline] = useState<
-    "PayU" | "PSE" | undefined
-  >(undefined);
+  const [metodoPago, setMetodoPago] = useState<"Consultorio" | "Online" | null>(null);
+  const [tipoPagoConsultorio, setTipoPagoConsultorio] = useState<"Efectivo" | "Tarjeta" | undefined>(undefined);
+  const [tipoPagoOnline, setTipoPagoOnline] = useState<"PayU" | "PSE" | undefined>(undefined);
 
   const [formData, setFormData] = useState<AgendarFormData>({
     nombre: "",
@@ -67,28 +50,21 @@ function AgendarPageContent() {
     hora: undefined,
   });
 
-  // === Cargar usuario actual desde localStorage ===
+  // ✅ Usuario real desde Supabase — ya no localStorage
+  const { user: usuario } = useAuth();
+
+  // Pre-rellenar formulario cuando carga el usuario autenticado
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (!usuario) return;
+    setFormData((prev) => ({
+      ...prev,
+      nombre:   prev.nombre   || usuario.nombres  || "",
+      telefono: prev.telefono || usuario.telefono || "",
+      correo:   prev.correo   || usuario.email    || "",
+    }));
+  }, [usuario]);
 
-    const stored = localStorage.getItem("currentUser");
-    if (!stored) return;
-
-    try {
-      const parsed: User = JSON.parse(stored);
-      setUsuario(parsed);
-      setFormData((prev) => ({
-        ...prev,
-        nombre: parsed.nombres ?? "",
-        telefono: parsed.telefono ?? "",
-        correo: parsed.email ?? "",
-      }));
-    } catch (err) {
-      console.warn("Error leyendo usuario local:", err);
-    }
-  }, []);
-
-  // === Cargar lista de procedimientos desde el backend ===
+  // Cargar procedimientos desde el backend
   useEffect(() => {
     const cargarProcedimientos = async () => {
       try {
@@ -98,59 +74,47 @@ function AgendarPageContent() {
         console.error("Error cargando procedimientos:", err);
       }
     };
-
     void cargarProcedimientos();
   }, []);
 
-  // === Paso 1 → 2 ===
+  // Paso 1 → 2
   const handleAvanzar = () => {
     if (!fecha || !hora) {
-      // eslint-disable-next-line no-alert
       alert("Selecciona un día y una hora antes de continuar.");
       return;
     }
     if (!usuario) {
-      // eslint-disable-next-line no-alert
       alert("Debes iniciar sesión para agendar una cita.");
       router.push("/login");
       return;
     }
-
-    const fechaISO = fecha.toISOString().slice(0, 10); // YYYY-MM-DD
-
-    setFormData((prev) => ({
-      ...prev,
-      fecha: fechaISO,
-      hora,
-    }));
+    const fechaISO = fecha.toISOString().slice(0, 10);
+    setFormData((prev) => ({ ...prev, fecha: fechaISO, hora }));
     setStep(2);
   };
 
-// Paso 2 → 3: armar objeto de cita sin pagos
-const handleConfirmarDatos = (): void => {
-  if (!fecha || !usuario) return;
+  // Paso 2 → 3
+  const handleConfirmarDatos = (): void => {
+    if (!fecha || !usuario) return;
 
-  const nuevaCita: CitaSinPagos = {
-    userId: usuario.id,
-    nombres: formData.nombre,
-    apellidos: usuario.apellidos,
-    telefono: formData.telefono,
-    correo: formData.correo,
-    procedimiento: formData.procedimiento,
-    nota: formData.nota,
-    tipoCita: "valoracion",
-    // mejor mandar solo YYYY-MM-DD porque en la BD es DATE
-    fecha: fecha.toISOString().slice(0, 10),
-    hora,
-    pagado: false,
-    creadaPor: "usuario",
-    // 👈 nada de fechaCreacion aquí, la pone el backend
+    const nuevaCita: CitaSinPagos = {
+      userId:        usuario.id,
+      nombres:       formData.nombre,
+      apellidos:     usuario.apellidos,
+      telefono:      formData.telefono,
+      correo:        formData.correo,
+      procedimiento: formData.procedimiento,
+      nota:          formData.nota,
+      tipoCita:      "valoracion",
+      fecha:         fecha.toISOString().slice(0, 10),
+      hora,
+      pagado:        false,
+      creadaPor:     "usuario",
+    };
+
+    setCitaDraft(nuevaCita);
+    setStep(3);
   };
-
-  setCitaDraft(nuevaCita);   // o setCitaConfirmada, según tu estado
-  setStep(3);
-};
-
 
   return (
     <main
@@ -161,6 +125,7 @@ const handleConfirmarDatos = (): void => {
     >
       <div className="mx-auto w-full max-w-7xl grid gap-6 items-start">
         <AnimatePresence mode="wait">
+
           {step === 1 && (
             <motion.div
               key="calendar"
@@ -176,7 +141,6 @@ const handleConfirmarDatos = (): void => {
                 onHoraSelect={setHora}
                 usuario={usuario}
               />
-
               <div className="text-center mt-8">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -236,7 +200,6 @@ const handleConfirmarDatos = (): void => {
                 modo="confirmacion"
                 mostrarQR={true}
               />
-
               <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
@@ -249,7 +212,6 @@ const handleConfirmarDatos = (): void => {
                 >
                   Volver al inicio
                 </motion.button>
-
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.97 }}
@@ -261,15 +223,13 @@ const handleConfirmarDatos = (): void => {
               </div>
             </motion.div>
           )}
+
         </AnimatePresence>
       </div>
     </main>
   );
 }
 
-// ======================
-// WRAPPER CON SUSPENSE
-// ======================
 export default function AgendarPage() {
   return (
     <Suspense fallback={<div className="p-10 text-center">Cargando agenda...</div>}>

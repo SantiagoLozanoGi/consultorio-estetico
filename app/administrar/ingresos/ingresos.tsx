@@ -1,180 +1,208 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { LineChart, Line, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import {
+  BarChart, Bar, CartesianGrid, XAxis, YAxis,
+  Tooltip, ResponsiveContainer, Cell,
+} from "recharts";
 import { motion } from "framer-motion";
 import { api } from "@/lib/api";
 import HistorialReportes from "./historialReportes";
 
-const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
+               "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-interface Totales {
-  totalOnline: number;
-  totalConsultorio: number;
-  totalEsperado: number;
+interface Resumen {
+  total_citas_historico: number;
+  total_atendidas: number;
+  total_canceladas: number;
+  total_pendientes: number;
+  citas_este_mes: number;
+  citas_hoy: number;
+  procedimientos_distintos_usados: number;
+  pacientes_unicos: number;
 }
 
-const fmt = (v: number) => `$${v.toLocaleString("es-CO")}`;
+interface TopProc {
+  nombre: string;
+  categoria: string;
+  imagen: string;
+  total: number;
+  atendidas: number;
+  tasa_exito_pct: number;
+}
+
+interface CitasMes {
+  mes: string;
+  mes_num: number;
+  anio: number;
+  total_citas: number;
+  atendidas: number;
+  canceladas: number;
+}
+
+const COLORES = ["#B08968","#8B6A4B","#C9AD8D","#7F5539","#D6B895","#6B4E3D"];
 
 export default function IngresosPage() {
-  const fechaActual = new Date();
-  const [anio, setAnio] = useState(fechaActual.getFullYear());
-  const [mes, setMes] = useState(fechaActual.getMonth());
-  const [ingresos, setIngresos] = useState<Totales>({ totalOnline: 0, totalConsultorio: 0, totalEsperado: 0 });
-  const [loading, setLoading] = useState(false);
+  const [resumen, setResumen]       = useState<Resumen | null>(null);
+  const [topProcs, setTopProcs]     = useState<TopProc[]>([]);
+  const [citasMes, setCitasMes]     = useState<CitasMes[]>([]);
+  const [loading, setLoading]       = useState(true);
   const [mostrarHistorial, setMostrarHistorial] = useState(false);
   const [guardandoReporte, setGuardandoReporte] = useState(false);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
-
-  // Construir datos del gráfico para los 6 últimos meses
-  const [dataChart, setDataChart] = useState<any[]>([]);
+  const [toast, setToast]           = useState<string | null>(null);
 
   const showToast = (msg: string) => {
-    setToastMsg(msg); setTimeout(() => setToastMsg(null), 3000);
-  };
-
-  /* ── Cargar totales del mes seleccionado ─────────────────────────────── */
-  const cargarTotales = async () => {
-    setLoading(true);
-    try {
-      const res = await api.get<{ ok: boolean } & Totales>(
-        `/ingresos/totales?year=${anio}&month=${mes}`
-      );
-      if (res.ok) {
-        setIngresos({
-          totalOnline: res.totalOnline,
-          totalConsultorio: res.totalConsultorio,
-          totalEsperado: res.totalEsperado,
-        });
-      }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
-  };
-
-  /* ── Cargar los últimos 6 meses para el gráfico ──────────────────────── */
-  const cargarChart = async () => {
-    const puntos: any[] = [];
-    for (let i = 5; i >= 0; i--) {
-      let m = mes - i;
-      let a = anio;
-      if (m < 0) { m += 12; a -= 1; }
-      try {
-        const res = await api.get<{ ok: boolean } & Totales>(
-          `/ingresos/totales?year=${a}&month=${m}`
-        );
-        if (res.ok) {
-          puntos.push({
-            mes: MESES[m].slice(0, 3),
-            Online: res.totalOnline,
-            Consultorio: res.totalConsultorio,
-            Esperado: res.totalEsperado,
-          });
-        }
-      } catch { /* ignorar errores individuales */ }
-    }
-    setDataChart(puntos);
+    setToast(msg); setTimeout(() => setToast(null), 3000);
   };
 
   useEffect(() => {
-    cargarTotales();
-    cargarChart();
-  }, [mes, anio]);
+    Promise.all([
+      api.get<{ ok: boolean; data: Resumen }>("/analytics/resumen"),
+      api.get<{ ok: boolean; data: TopProc[] }>("/analytics/top-mes"),
+      api.get<{ ok: boolean; data: CitasMes[] }>("/analytics/citas-por-mes?meses=6"),
+    ])
+      .then(([r, t, c]) => {
+        if (r.ok) setResumen(r.data);
+        if (t.ok) setTopProcs(t.data);
+        if (c.ok) setCitasMes(c.data.reverse()); // más antiguo primero para el gráfico
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
 
-  /* ── Guardar reporte en BD ───────────────────────────────────────────── */
+  /* ── Guardar reporte manual ──────────────────────────────── */
   const handleGuardarReporte = async () => {
+    const hoy = new Date();
     setGuardandoReporte(true);
     try {
       await api.post("/reportes", {
-        mes: mes + 1, anio,
-        totalOnline: ingresos.totalOnline,
-        totalConsultorio: ingresos.totalConsultorio,
-        totalEsperado: ingresos.totalEsperado,
+        mes:  hoy.getMonth() + 1,
+        anio: hoy.getFullYear(),
       });
       showToast("✅ Reporte guardado correctamente");
     } catch (e: any) {
-      showToast("❌ Error guardando reporte: " + e.message);
+      showToast("❌ Error: " + e.message);
     } finally {
       setGuardandoReporte(false);
     }
   };
 
-  const tarjetas = [
-    { label: "Pagos Online", value: ingresos.totalOnline, color: "#1B4F72", bg: "#D6EAF8" },
-    { label: "Pagos Consultorio", value: ingresos.totalConsultorio, color: "#2D6A4F", bg: "#D8F3DC" },
-    { label: "Total Esperado", value: ingresos.totalEsperado, color: "#7F5539", bg: "#F5EEE6" },
-  ];
+  if (loading) {
+    return (
+      <div className="text-center py-5">
+        <div className="spinner-border" style={{ color: "#B08968" }} role="status" />
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h2 className="fw-bold mb-4" style={{ color: "#4E3B2B" }}>Ingresos</h2>
-
-      {toastMsg && (
-        <div className="alert rounded-3 py-2 px-4 mb-3 text-center fw-semibold" style={{ backgroundColor: "#E9DED2", color: "#4E3B2B" }}>
-          {toastMsg}
-        </div>
-      )}
-
-      {/* Selector mes / año */}
-      <div className="d-flex gap-3 align-items-center mb-5 flex-wrap">
-        <select className="form-select form-select-sm" style={{ maxWidth: 160, borderColor: "#E9DED2" }} value={mes} onChange={(e) => setMes(Number(e.target.value))}>
-          {MESES.map((m, i) => <option key={i} value={i}>{m}</option>)}
-        </select>
-        <select className="form-select form-select-sm" style={{ maxWidth: 100, borderColor: "#E9DED2" }} value={anio} onChange={(e) => setAnio(Number(e.target.value))}>
-          {[2023, 2024, 2025, 2026].map((a) => <option key={a}>{a}</option>)}
-        </select>
-        <button onClick={handleGuardarReporte} disabled={guardandoReporte || loading} className="btn btn-sm rounded-pill fw-semibold px-4" style={{ backgroundColor: "#8B6A4B", color: "#fff", border: "none" }}>
-          {guardandoReporte ? "Guardando…" : "💾 Guardar reporte"}
+      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <h2 className="fw-bold m-0" style={{ color: "#4E3B2B" }}>Analytics del Consultorio</h2>
+        <button onClick={handleGuardarReporte} disabled={guardandoReporte}
+          className="btn rounded-pill fw-semibold px-4"
+          style={{ backgroundColor: "#8B6A4B", color: "#fff", border: "none" }}>
+          {guardandoReporte ? "Guardando…" : "💾 Guardar reporte del mes"}
         </button>
       </div>
 
-      {/* Tarjetas */}
-      <div className="row g-4 mb-5">
-        {tarjetas.map((t) => (
-          <div key={t.label} className="col-md-4">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-4 p-4 shadow-sm text-center"
-              style={{ backgroundColor: t.bg, border: `1px solid ${t.color}22` }}
-            >
-              <p className="small fw-semibold mb-1" style={{ color: t.color }}>{t.label}</p>
-              {loading ? (
-                <div className="spinner-border spinner-border-sm" style={{ color: t.color }} role="status" />
-              ) : (
-                <h3 className="fw-bold m-0" style={{ color: t.color }}>{fmt(t.value)}</h3>
-              )}
-              <p className="small mb-0 mt-1" style={{ color: t.color + "99" }}>
-                {MESES[mes]} {anio}
-              </p>
-            </motion.div>
-          </div>
-        ))}
-      </div>
+      {toast && (
+        <div className="alert rounded-3 py-2 px-4 mb-4 text-center fw-semibold"
+          style={{ backgroundColor: "#E9DED2", color: "#4E3B2B" }}>
+          {toast}
+        </div>
+      )}
 
-      {/* Gráfico últimos 6 meses */}
-      {dataChart.length > 0 && (
+      {/* KPIs GENERALES */}
+      {resumen && (
+        <div className="row g-3 mb-5">
+          {[
+            { label: "Citas hoy",        value: resumen.citas_hoy,                  color: "#1B4F72", bg: "#D6EAF8" },
+            { label: "Citas este mes",   value: resumen.citas_este_mes,             color: "#2D6A4F", bg: "#D8F3DC" },
+            { label: "Total atendidas",  value: resumen.total_atendidas,            color: "#7F5539", bg: "#F5EEE6" },
+            { label: "Pacientes únicos", value: resumen.pacientes_unicos,           color: "#6B4E3D", bg: "#EDE0D4" },
+            { label: "Canceladas",       value: resumen.total_canceladas,           color: "#922B21", bg: "#FADBD8" },
+            { label: "Procedimientos usados", value: resumen.procedimientos_distintos_usados, color: "#5B2C6F", bg: "#E8DAEF" },
+          ].map((k) => (
+            <div key={k.label} className="col-md-4 col-6">
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                className="rounded-4 p-4 text-center shadow-sm"
+                style={{ backgroundColor: k.bg, border: `1px solid ${k.color}22` }}>
+                <p className="small fw-semibold mb-1" style={{ color: k.color }}>{k.label}</p>
+                <h3 className="fw-bold m-0" style={{ color: k.color }}>{k.value ?? 0}</h3>
+              </motion.div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* TOP PROCEDIMIENTOS ESTE MES */}
+      {topProcs.length > 0 && (
         <div className="rounded-4 p-4 shadow-sm mb-5" style={{ backgroundColor: "#FFFDF9", border: "1px solid #E9DED2" }}>
-          <h5 className="fw-semibold mb-4" style={{ color: "#4E3B2B" }}>Últimos 6 meses</h5>
-          <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={dataChart}>
+          <h5 className="fw-semibold mb-4" style={{ color: "#4E3B2B" }}>
+            🏆 Top procedimientos este mes
+          </h5>
+          <div className="d-flex flex-column gap-3">
+            {topProcs.map((p, i) => (
+              <div key={p.nombre} className="d-flex align-items-center gap-3">
+                <span className="fw-bold" style={{ color: "#B08968", minWidth: 24 }}>#{i + 1}</span>
+                {p.imagen && (
+                  <img src={p.imagen} alt={p.nombre}
+                    style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover",
+                      border: "1px solid #E9DED2", flexShrink: 0 }} />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="fw-semibold mb-0 text-truncate" style={{ color: "#4E3B2B" }}>{p.nombre}</p>
+                  <p className="small mb-0" style={{ color: "#8B7060" }}>
+                    {p.total} citas · {p.atendidas} atendidas · {p.tasa_exito_pct}% éxito
+                  </p>
+                </div>
+                {/* Barra de progreso */}
+                <div style={{ minWidth: 80 }}>
+                  <div className="rounded-pill overflow-hidden" style={{ height: 8, backgroundColor: "#E9DED2" }}>
+                    <div style={{
+                      width: `${p.tasa_exito_pct}%`, height: "100%",
+                      backgroundColor: COLORES[i % COLORES.length], transition: "width 0.6s",
+                    }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* GRÁFICO TENDENCIA MENSUAL */}
+      {citasMes.length > 0 && (
+        <div className="rounded-4 p-4 shadow-sm mb-5" style={{ backgroundColor: "#FFFDF9", border: "1px solid #E9DED2" }}>
+          <h5 className="fw-semibold mb-4" style={{ color: "#4E3B2B" }}>📈 Tendencia últimos 6 meses</h5>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={citasMes} barGap={4}>
               <CartesianGrid strokeDasharray="3 3" stroke="#E9DED2" />
-              <XAxis dataKey="mes" tick={{ fontSize: 12, fill: "#8B7060" }} />
-              <YAxis tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} tick={{ fontSize: 11, fill: "#8B7060" }} />
-              <Tooltip formatter={(v: number) => fmt(v)} />
-              <Line type="monotone" dataKey="Online" stroke="#1B4F72" strokeWidth={2} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="Consultorio" stroke="#2D6A4F" strokeWidth={2} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="Esperado" stroke="#B08968" strokeWidth={2} strokeDasharray="5 5" dot={{ r: 4 }} />
-            </LineChart>
+              <XAxis dataKey="mes_num"
+                tickFormatter={(v) => MESES[v - 1]?.slice(0, 3) || v}
+                tick={{ fontSize: 12, fill: "#8B7060" }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "#8B7060" }} />
+              <Tooltip
+                formatter={(v: number, name: string) => [v, name === "total_citas" ? "Total" : name === "atendidas" ? "Atendidas" : "Canceladas"]}
+                labelFormatter={(v) => MESES[Number(v) - 1] || v}
+              />
+              <Bar dataKey="total_citas" name="total_citas" radius={[4,4,0,0]}>
+                {citasMes.map((_, i) => (
+                  <Cell key={i} fill={COLORES[i % COLORES.length]} />
+                ))}
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
-      {/* Historial de reportes */}
+      {/* HISTORIAL DE REPORTES */}
       <div className="mt-2">
-        <button
-          onClick={() => setMostrarHistorial((v) => !v)}
+        <button onClick={() => setMostrarHistorial((v) => !v)}
           className="btn rounded-pill fw-semibold px-4 mb-3"
-          style={{ backgroundColor: "#E9DED2", color: "#4E3B2B", border: "none" }}
-        >
+          style={{ backgroundColor: "#E9DED2", color: "#4E3B2B", border: "none" }}>
           {mostrarHistorial ? "▲ Ocultar" : "▼ Ver"} historial de reportes
         </button>
         {mostrarHistorial && <HistorialReportes />}

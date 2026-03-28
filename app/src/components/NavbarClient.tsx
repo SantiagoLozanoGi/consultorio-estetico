@@ -98,7 +98,7 @@ export default function Navbar() {
         {/* LOGO */}
         <Link href="/" className="navbar-logo d-flex align-items-center">
           <Image
-            src="/imagenes/logo/logoJM.jpg"
+            src="/imagenes/logo/LogoJM.jpg"
             alt="Logo JM"
             width={75}
             height={55}

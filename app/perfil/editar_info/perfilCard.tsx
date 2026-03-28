@@ -10,11 +10,23 @@ import { useEditarInfo } from "./useEditarInfo";
 export default function PerfilCard() {
   const {
     user,
-    formState,
-    setters,
-    handleSave,
-    canEdit,
+    saving,
     message,
+    nombres, setNombres,
+    apellidos, setApellidos,
+    telefono, setTelefono,
+    edad, setEdad,
+    genero, setGenero,
+    photo, setPhoto,
+    antecedentes, setAntecedentes,
+    alergias, setAlergias,
+    medicamentos, setMedicamentos,
+    antecedentesDescripcion, setAntecedentesDescripcion,
+    alergiasDescripcion, setAlergiasDescripcion,
+    medicamentosDescripcion, setMedicamentosDescripcion,
+    handleSavePersonal,
+    handleSaveMedical,
+    canEdit,
     daysRemaining,
   } = useEditarInfo();
 
@@ -27,10 +39,10 @@ export default function PerfilCard() {
       transition={{ duration: 0.4 }}
     >
       <FotoPerfil
-        photo={formState.photo}
+        photo={photo}
         email={user?.email}
         canEdit={canEdit}
-        setPhoto={setters.setPhoto}
+        setPhoto={setPhoto}
       />
 
       <AnimatePresence>
@@ -43,8 +55,8 @@ export default function PerfilCard() {
             <div
               className="alert text-center"
               style={{
-                backgroundColor: PALETTE.main,
-                color: "white",
+                backgroundColor: message.startsWith("❌") ? "#f8d7da" : PALETTE.main,
+                color: message.startsWith("❌") ? "#721c24" : "white",
                 border: "none",
               }}
             >
@@ -56,34 +68,65 @@ export default function PerfilCard() {
 
       <div className="row g-4">
         <div className="col-md-6">
-          <DatosPersonalesForm {...formState} {...setters} canEdit={canEdit} />
+          <DatosPersonalesForm
+            nombres={nombres}
+            apellidos={apellidos}
+            telefono={telefono}
+            edad={edad}
+            genero={genero}
+            setNombres={setNombres}
+            setApellidos={setApellidos}
+            setTelefono={setTelefono}
+            setEdad={setEdad}
+            setGenero={setGenero}
+            canEdit={canEdit}
+          />
+          <div className="text-center mt-3">
+            <button
+              onClick={handleSavePersonal}
+              disabled={!canEdit || saving}
+              className="btn text-white fw-semibold px-4 py-2 rounded-3 shadow-sm"
+              style={{ backgroundColor: PALETTE.main, opacity: canEdit && !saving ? 1 : 0.6 }}
+            >
+              {saving ? "Guardando…" : "Guardar datos personales"}
+            </button>
+          </div>
         </div>
+
         <div className="col-md-6">
-          <DatosMedicosForm {...formState} {...setters} canEdit={canEdit} />
+          <DatosMedicosForm
+            antecedentes={antecedentes}
+            alergias={alergias}
+            medicamentos={medicamentos}
+            setAntecedentes={setAntecedentes}
+            setAlergias={setAlergias}
+            setMedicamentos={setMedicamentos}
+            antecedentesDescripcion={antecedentesDescripcion}
+            alergiasDescripcion={alergiasDescripcion}
+            medicamentosDescripcion={medicamentosDescripcion}
+            setAntecedentesDescripcion={setAntecedentesDescripcion}
+            setAlergiasDescripcion={setAlergiasDescripcion}
+            setMedicamentosDescripcion={setMedicamentosDescripcion}
+            canEdit={canEdit}
+          />
+          <div className="text-center mt-3">
+            <button
+              onClick={handleSaveMedical}
+              disabled={!canEdit || saving}
+              className="btn text-white fw-semibold px-4 py-2 rounded-3 shadow-sm"
+              style={{ backgroundColor: PALETTE.main, opacity: canEdit && !saving ? 1 : 0.6 }}
+            >
+              {saving ? "Guardando…" : "Guardar datos médicos"}
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="text-center mt-4">
-        <button
-          onClick={handleSave}
-          className="btn text-white fw-semibold px-4 py-2 rounded-3 shadow-sm"
-          style={{
-            backgroundColor: PALETTE.main,
-            opacity: canEdit ? 1 : 0.6,
-          }}
-          disabled={!canEdit}
-        >
-          Guardar cambios
-        </button>
-
-        <p className="text-muted mt-2" style={{ fontSize: "0.9rem" }}>
-          {canEdit
-            ? "Solo puedes actualizar tu información una vez cada 30 días."
-            : `Vuelve el ${new Date(
-                Date.now() + daysRemaining * 86400000
-              ).toLocaleDateString()} para modificar tus datos.`}
-        </p>
-      </div>
+      <p className="text-muted text-center mt-3" style={{ fontSize: "0.85rem" }}>
+        {canEdit
+          ? "Puedes actualizar tu información cuando quieras."
+          : `Vuelve en ${daysRemaining} día(s) para modificar tus datos.`}
+      </p>
     </motion.div>
   );
 }
